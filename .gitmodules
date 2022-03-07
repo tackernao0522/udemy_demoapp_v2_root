@@ -1,6 +1,6 @@
 [submodule "api"]
   path = api
-  url = ./api
+  url = https://github.com/tackernao0522/udemy_demoapp_v2_api
 [submodule "front"]
   patch = front
-  url = ./front
+  url = https://github.com/tackernao0522/udemy_demoapp_v2_front

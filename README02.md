@@ -112,3 +112,64 @@ groovy@groovy-no-MacBook-Pro udemy-rails-nuxt %
 ```
 
 - `$ git add -A`を実行<br>
+
+* `$ git commit -m "Add .gitmodules"`を実行<br>
+
+- GitHub に`udemy_demoapp_v2_root`リポジトリを作成<br>
+
+* GitHub に`udemy_demoapp_v2_api`リポジトリを作成<br>
+
+* GitHub に`udemy_demoapp_v2_front`リポジトリを作成<br>
+
+- GitHub のユーザーアイコンのプルダウンにある`your projects`をクリック<br>
+
+- `New Project`をクリック<br>
+
+* Project board name に `udemy_demoapp_v2`を入力<br>
+
+- Linked repositories に `udemy_demoapp_v2_root`, `udemy_demoapp_v2_api`, `udemy_demoapp_v2_front`を選択して入れる<br>
+
+* `Create project`をクリック<br>
+
+- GitHub の`your projects`を確認してみる<br>
+
+* `cd api`を実行<br>
+
+* `$ git remote add origin git@github.com:tackernao0522/udemy_demoapp_v2_api.git`を実行<br>
+
+- `$ git push`を実行<br>
+
+下記のようになる<br>
+
+```:terminal
+groovy@groovy-no-MacBook-Pro api % git push
+fatal: The current branch main has no upstream branch.
+To push the current branch and set the remote as upstream, use
+
+    git push --set-upstream origin main
+
+groovy@groovy-no-MacBook-Pro api %
+```
+
+- 最初の一回だけ`$ git push --set-upstream origin main`を実行<br>
+
+* `$ cd front`を実行<br>
+
+- `$ git remote add origin git@github.com:tackernao0522/udemy_demoapp_v2_front.git`を実行<br>
+
+- 最初の一回だけ`$ git push --set-upstream origin main`を実行<br>
+
+- `.gitmodules`を編集<br>
+
+```:.gitmodules
+[submodule "api"]
+  path = api
+  url = https://github.com/tackernao0522/udemy_demoapp_v2_api
+[submodule "front"]
+  patch = front
+  url = https://github.com/tackernao0522/udemy_demoapp_v2_front
+```
+
+- `rootディレクトリ`に移動<br>
+
+- `$ git commit -am "Edit .gitmodules"`を実行<br>
