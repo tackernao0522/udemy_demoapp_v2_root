@@ -177,3 +177,134 @@ groovy@groovy-no-MacBook-Pro api %
 * `$ git remote add origin git@github.com:tackernao0522/udemy_demoapp_v2_root.git`を実行<br>
 
 - `$ git push --set-upstream origin main`を実行<br>
+
+# セクション 5: RailsApi x Nuxt.js 初めての API 通信
+
+- `docker-compose.yml`を編集<br>
+
+```yml:docker-compose.yml
+# composeファイルのバージョン指定
+# Doc: https://docs.docker.com/compose/compose-file/compose-versioning/
+version: '3.8'
+
+services:
+  # サービス(= コンテナ)
+  db:
+    # ベースイメージを定義
+    image: postgres:13.1-alpine
+    # 環境変数を定義
+    environment:
+      # OSのタイムゾーン
+      TZ: UTC
+      # postgresのタイムゾーン
+      PGTZ: UTC
+      # データベースのパスワード
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+    # ホスト側のディレクトリをコンテナで使用する
+    # volumes: ホストパス(絶対 or 相対) : コンテナパス(絶対)
+    volumes:
+      - './api/tmp/db:/var/lib/postgresql/data'
+
+  api:
+    # ベースイメージとなるDockerfileを指定
+    build:
+      context: ./api
+      # Dockerfileに変数を渡す
+      args:
+        WORKDIR: $WORKDIR
+    environment:
+      POSTGRES_PASSWORD: $POSTGRES_PASSWORD
+      API_DOMAIN: 'localhost:$FRONT_PORT' # 追加
+    volumes:
+      - './api:/$WORKDIR'
+    # サービスの依存関係を定義(起動の順番)
+    # 公開したいポート番号:コンテナポート
+    depends_on:
+      - db
+    # 公開用ポートを指定
+    ports:
+      - '$API_PORT:3000'
+
+  front:
+    build:
+      context: ./front
+      args:
+        WORKDIR: $WORKDIR
+        API_URL: 'http://localhost:$API_PORT' # 追加
+    # コンテナで実行したいコマンド(CMD)
+    command: yarn run dev
+    volumes:
+      - './front:/$WORKDIR'
+    ports:
+      - '$FRONT_PORT:3000'
+    depends_on:
+      - api
+```
+
+- `front/Dockerfile`を編集<br>
+
+```:Dockerfile
+# FROM node:14.4.0-alpine 使用不可
+FROM node:16.13.1-alpine
+
+ARG WORKDIR
+ARG API_URL # 追記
+
+ENV HOME=/${WORKDIR} \
+  LANG=C.UTF-8 \
+  TZ=Asia/Tokyo \
+  # これを指定しないとブラウザからhttp://localhost へアクセスすることができない。
+  # コンテナのNuxt.jsをブラウザから参照するためにip:0.0.0.0に紐付ける
+  # https://ja.nuxtjs.org/faq/host-port/
+  HOST=0.0.0.0 \
+  API_URL=${API_URL} # 追記
+
+WORKDIR ${HOME}
+
+# 公開用ポート番号を指定
+# 3000番が入ってくる(http://localhost(0.0.0.0):3000)
+# EXPOSE ${CONTAINER_PORT}
+
+# 2021.12.13追記
+# FROM node:14.15.1-alpine
+# node v14.15.1は、$ yarn create nuxt-app appコマンド時に下記エラーが発生するので使用不可
+# eslint-plugin-vue@8.2.0: The engine "node" is incompatible with this module. Expected version "^12.22.0 || ^14.17.0 || >=16.0.0". Got "14.15.1"
+
+# create nuxt-appコマンド成功確認済みのnode version
+# FROM node:16.13.1-alpine
+# or
+# FROM node:16-alpine(node v16.13.1)
+
+# 現在のnode推奨版はこちらから => https://nodejs.org/ja/download/
+```
+
+- `root $ docker compose build front`を実行<br>
+
+* `root $ docker-compose run --rm api rails g controller api::v1::hello`を実行<br>
+
+- `api/app/controllers/api/v1/hello_controller.rb`を編集<br>
+
+```rb:hello_controller.rb
+class Api::V1::HelloController < ApplicationController
+  def index
+    render json: 'Hello'
+  end
+end
+```
+
+- `api/config/routes.rb`を編集<br>
+
+```rb:routes.rb
+Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      # api test action
+      resources :hello, only: %i[index]
+    end
+  end
+end
+```
+
+- `root $ docker compose up api`を実行<br>
+
+* http://localhost:3000/api/v1/hello にアクセスしてみる<br>
