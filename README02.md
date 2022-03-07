@@ -166,10 +166,14 @@ groovy@groovy-no-MacBook-Pro api %
   path = api
   url = https://github.com/tackernao0522/udemy_demoapp_v2_api
 [submodule "front"]
-  patch = front
+  path = front
   url = https://github.com/tackernao0522/udemy_demoapp_v2_front
 ```
 
 - `rootディレクトリ`に移動<br>
 
 - `$ git commit -am "Edit .gitmodules"`を実行<br>
+
+* `$ git remote add origin git@github.com:tackernao0522/udemy_demoapp_v2_root.git`を実行<br>
+
+- `$ git push --set-upstream origin main`を実行<br>

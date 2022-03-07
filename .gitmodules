@@ -2,5 +2,5 @@
   path = api
   url = https://github.com/tackernao0522/udemy_demoapp_v2_api
 [submodule "front"]
-  patch = front
+  path = front
   url = https://github.com/tackernao0522/udemy_demoapp_v2_front
