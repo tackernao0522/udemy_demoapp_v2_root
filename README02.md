@@ -308,3 +308,126 @@ end
 - `root $ docker compose up api`を実行<br>
 
 * http://localhost:3000/api/v1/hello にアクセスしてみる<br>
+
+## 22 Nuxt.js axios の初期設定を行う
+
+- `root $ docker-compose run --rm front yarn add @nuxtjs/axios`を実行<br>
+
+* `root $ mkdir front/plugins`を実行<br>
+
+- `root $ touch front/plugins/axios.js`ファイルを作成<br>
+
+```js:axios.js
+export default ({ $axios }) => {
+  // リクエストログ
+  $axios.onRequest((config) => {
+    // eslint-disable-next-line no-console
+    console.log(config)
+  })
+  // レスポンスログ
+  $axios.onResponse((config) => {
+    // eslint-disable-next-line no-console
+    console.log(config)
+  })
+  // エラーログ
+  $axios.onError((e) => {
+    // eslint-disable-next-line no-console
+    console.log(e.response)
+  })
+}
+```
+
+- `front/nuxt.config.js`を編集<br>
+
+```js:nuxt.config.js
+export default {
+  // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
+  ssr: false,
+
+  // Global page headers: https://go.nuxtjs.dev/config-head
+  head: {
+    title: 'app',
+    htmlAttrs: {
+      lang: 'en',
+    },
+    meta: [
+      { charset: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { hid: 'description', name: 'description', content: '' },
+      { name: 'format-detection', content: 'telephone=no' },
+    ],
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  },
+
+  // Global CSS: https://go.nuxtjs.dev/config-css
+  css: [],
+
+  // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
+  plugins: ['plugins/axios'], // 追記
+
+  // Auto import components: https://go.nuxtjs.dev/config-components
+  components: true,
+
+  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
+  buildModules: [
+    // https://go.nuxtjs.dev/eslint
+    '@nuxtjs/eslint-module',
+  ],
+
+  // Modules: https://go.nuxtjs.dev/config-modules
+  modules: [
+    // https://go.nuxtjs.dev/axios
+    '@nuxtjs/axios',
+  ],
+
+  // Axios module configuration: https://go.nuxtjs.dev/config-axios
+  axios: {
+    // 環境変数API_URLが優先される
+    // baseURL: '/', // 削除
+  },
+
+  // Build Configuration: https://go.nuxtjs.dev/config-build
+  build: {},
+}
+```
+
+- `front/pages/index.vue`を編集<br>
+
+```vue:index.vue
+<template>
+  <div>
+    <button type="button" name="button" @click="getMsg">
+      RailsからAPIを取得する
+    </button>
+    <div v-for="(msg, i) in msgs" :key="i">
+      {{ msg }}
+    </div>
+  </div>
+</template>
+
+<script>
+export default {
+  data() {
+    return {
+      msgs: [],
+    }
+  },
+  methods: {
+    getMsg() {
+      this.$axios.$get('/api/v1/hello').then((res) => this.msgs.push(res))
+    },
+  },
+}
+</script>
+```
+
+- `$ cd front`を実行<br>
+
+- `front $ git rm components/NuxtLogo.vue`を実行<br>
+
+- `front $ git rm components/Tutorial.vue`を実行<br>
+
+- `root $docker compose up`を実行<br>
+
+* localhost:8080 にアクセスしてみる<br>
+
