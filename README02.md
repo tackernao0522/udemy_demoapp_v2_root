@@ -79,3 +79,36 @@ submodule ... 別リポジトリの編集履歴を現在のリポジトリで管
 - `$ git commit -m "Create Nuxt.js App"`を実行<br>
 
 ## 18 root リポジトリのコミット
+
+- `root ディレクトに移動`<br>
+
+- 今回は一旦`$ rm -rf .git`を実行してやり直した。<br>
+
+* `$ git init`を実行<br>
+
+* `$ git add -A`を実行<br>
+
+- `$ git submodule add ./api api`を実行すると下記のようになる<br>
+
+```:terminal
+groovy@groovy-no-MacBook-Pro udemy-rails-nuxt % git submodule add ./api api
+fatal: 'api' already exists in the index
+groovy@groovy-no-MacBook-Pro udemy-rails-nuxt %
+```
+
+- `$ git commit -m "Create App"`を実行<br>
+
+* `$ git ls-files`を実行して確認してみる<br>
+
+- `$ vi .gitmodules`を実行<br>
+
+```vi:.bitmodules
+[submodule "api"]
+  path = api
+  url = ./api
+[submodule "front"]
+  patch = front
+  url = ./front
+```
+
+- `$ git add -A`を実行<br>
