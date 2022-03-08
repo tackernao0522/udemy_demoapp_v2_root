@@ -431,3 +431,124 @@ export default {
 
 * localhost:8080 にアクセスしてみる<br>
 
+## 23 Rails CORS 設定を行う
+
+- エラーの原因<br>
+
+```browser:console
+Access to XMLHttpRequest at 'http://localhost:3000/api/v1/hello' from origin 'http://localhost:8080' has been blocked by CORS policy: No 'Access-Control-Allow-Origin' header is present on the requested resource.
+axios.js?dcce:15 undefined
+```
+
+同一オリジンポリシーに違反している<br>
+
+### 同一オジリンポリシーとは？
+
+あるオリジンから読み込まれた文書やスクリプトを異なるオリジンからアクセスできないように制限した`規約`<br>
+
+### オリジンとは？
+
+スキーム + ドメイン + ポート<br>
+
+http + localhost + 3000<br>
+
+### エラー原因まとめ
+
+(front) http://localhost:8080 <= 異なるオリジン間の通信 => (api) http://localhost:3000<br>
+
+同一オリジンポリシーに違反<br>
+
+<h4>アクセスの制限</h4>
+
+### CORS とは？
+
+クロス・オリジン・リソース・シェアリング<br>
+
+異なるオリジン間の通信を許可する仕組み<br>
+
+### CORS 設定の方法
+
+Rails に Nuxt.js のオリジンを許可する<br>
+
+`Gem rack-cors`<br>
+
+### ハンズオン
+
+- `api/Gemfile`を編集<br>
+
+```:Gemfile
+source 'https://rubygems.org'
+git_source(:github) { |repo| "https://github.com/#{repo}.git" }
+
+ruby '2.7.2'
+
+# Bundle edge Rails instead: gem 'rails', github: 'rails/rails', branch: 'main'
+gem 'rails', '~> 6.0.4', '>= 6.0.4.6'
+# Use postgresql as the database for Active Record
+gem 'pg', '>= 0.18', '< 2.0'
+# Use Puma as the app server
+gem 'puma', '~> 4.1'
+# Build JSON APIs with ease. Read more: https://github.com/rails/jbuilder
+# gem 'jbuilder', '~> 2.7'
+# Use Redis adapter to run Action Cable in production
+# gem 'redis', '~> 4.0'
+# Use Active Model has_secure_password
+# gem 'bcrypt', '~> 3.1.7'
+
+# Use Active Storage variant
+# gem 'image_processing', '~> 1.2'
+
+# Reduces boot times through caching; required in config/boot.rb
+gem 'bootsnap', '>= 1.4.2', require: false
+
+# Use Rack CORS for handling Cross-Origin Resource Sharing (CORS), making cross-origin AJAX possible
+gem 'rack-cors' # コメントアウトを解除
+
+group :development, :test do
+  # Call 'byebug' anywhere in the code to stop execution and get a debugger console
+  gem 'byebug', platforms: [:mri, :mingw, :x64_mingw]
+end
+
+group :development do
+  gem 'listen', '~> 3.2'
+  # Spring speeds up development by keeping your application running in the background. Read more: https://github.com/rails/spring
+  gem 'spring'
+  gem 'spring-watcher-listen', '~> 2.0.0'
+end
+
+# Windows does not include zoneinfo files, so bundle the tzinfo-data gem
+gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
+```
+
+- `root $ docker compose build api`を実行<br>
+
+- `root $ docker compose run --rm api bundle info rack-cors`を実行して install されているか確認(下記のようになれば OK)<br>
+
+```
+* rack-cors (1.1.1)
+        Summary: Middleware for enabling Cross-Origin Resource Sharing in Rack apps
+        Homepage: https://github.com/cyu/rack-cors
+        Path: /usr/local/bundle/gems/rack-cors-1.1.1
+```
+
+- `api/config/initializers/cors.rb`を編集<br>
+
+```rb:cors.rb
+# Be sure to restart your server when you modify this file.
+
+# Avoid CORS issues when API is called from the frontend app.
+# Handle Cross-Origin Resource Sharing (CORS) in order to accept cross-origin AJAX requests.
+
+# Read more: https://github.com/cyu/rack-cors
+
+Rails.application.config.middleware.insert_before 0, Rack::Cors do
+  allow do
+    origins ENV['API_DOMAIN'] || ''
+
+    resource '*',
+             headers: :any, methods: %i[get post put patch delete options head]
+  end
+end
+```
+
+- http://localhost:8080/ にアクセスしてクリックすると`Hello`が出力されてエラーも出ない<br>
