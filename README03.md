@@ -342,3 +342,123 @@ beta 版から安定版に戻す場合は `$ hroku update stable`<br>
 - `udemy-railsnuxtv2-api`を開く(add-ons が設定されているか確認する)<br>
 
 * `Settings`の`Config Vars`の`Reveal Config Vars`をクリックする(5 個の値が設定されていれば OK)<br>
+
+## 28 Heroku へ SSH 接続を行い Rails をデプロイする 〜デプロイ編〜
+
+- 参考: https://devcenter.heroku.com/ja/articles/keys <br>
+
+* `$ cd api`を実行<br>
+
+- `api $ ssh-keygen -t rsa -f ~/.ssh/id_rsa_heroku -C groovy@macbookpro.local`を実行<br>
+
+- そのまま`Enter`で進む<br>
+
+* そのまま`Enter`で進む<br>
+
+```:terminal
+groovy@groovy-no-MacBook-Pro api % ssh-keygen -t rsa -f ~/.ssh/id_rsa_heroku -C groovy@macbookpro.local
+Generating public/private rsa key pair.
+Enter passphrase (empty for no passphrase):
+Enter same passphrase again:
+Your identification has been saved in /Users/groovy/.ssh/id_rsa_heroku.
+Your public key has been saved in /Users/groovy/.ssh/id_rsa_heroku.pub.
+The key fingerprint is:
+SHA256:PbyH/SmxUNflQPHcNDXHhk+nwVVvnOA0Q6hqv7dqk2s groovy@macbookpro.local
+The key's randomart image is:
++---[RSA 3072]----+
+|            oOoBO|
+|           .o O=&|
+|          .  . @X|
+|         +  . o.+|
+|        S +. .   |
+|       o  .=.    |
+|      . . +.oo   |
+|         E oo. . |
+|        o+*...o  |
++----[SHA256]-----+
+```
+
+- `api $ ls ~/.ssh`を実行して確認する<br>
+
+- `api $ heroku keys:add ~/.ssh/id_rsa_heroku.pub`を実行<br>
+
+```:terminal
+Uploading /Users/groovy/.ssh/id_rsa_heroku.pub SSH key... done
+```
+
+- Heroku ブラウザの Account Settings の SSH Keys に反映されていれば OK<br>
+
+* `api $ heroku keys`を実行しても確認できる<br>
+
+- `api $ vi ~/.ssh/config`を実行<br>
+
+- https://devcenter.heroku.com/ja/articles/keys にアクセスして下記をコピーする<br>
+
+```
+Host heroku.com
+  HostName heroku.com
+  IdentityFile /path/to/key_file
+  IdentitiesOnly yes
+```
+
+- `.ssh/config`を編集する<br>
+
+```:.ssh/config
+Host heroku.com
+  HostName heroku.com
+  IdentityFile ~/.ssh/id_rsa_heroku
+  IdentitiesOnly yes
+```
+
+- `api $ ssh -v git@heroku.com`を実行して確認(下記の 2 文が記されていれば OK)<br>
+
+```:terminal
+debug1: Offering public key: /Users/groovy/.ssh/id_rsa_heroku RSA SHA256:PbyH/SmxUNflQPHcNDXHhk+nwVVvnOA0Q6hqv7dqk2s explicit
+Authenticated to heroku.com ([50.19.85.154]:22).
+```
+
+- `api $ git remote -v`を実行<br>
+
+```:terminal
+heroku  https://git.heroku.com/udemy-railsnuxtv2-api.git (fetch)
+heroku  https://git.heroku.com/udemy-railsnuxtv2-api.git (push)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_api.git (fetch)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_api.git (push)
+```
+
+- `api $ git remote remove heroku`を実行<br>
+
+* `api $ git remote -v`を実行<br>
+
+```:terminal
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_api.git (fetch)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_api.git (push)
+```
+
+- `api $ git remote add heroku git@heroku.com:udemy-railsnuxtv2-api.git`を実行<br>
+
+- `api $ git remote -v`を実行<br>
+
+```:terminal
+heroku  git@heroku.com:udemy-railsnuxtv2-api.git (fetch)
+heroku  git@heroku.com:udemy-railsnuxtv2-api.git (push)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_api.git (fetch)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_api.git (push)
+```
+
+- `api $ heroku stack`を実行(container に'\*'が付いていれば OK)<br>
+
+```:terminal
+=== ⬢ udemy-railsnuxtv2-api Available Stacks
+* container
+  heroku-18
+  heroku-20
+```
+
+- もし container に設定されていない場合は `api $ heroku stack:set container`を実行すると変更できる<br>
+
+* `api $ git push heroku main`を実行(最後に下記の文が記されていれば OK)<br>
+
+```:terminal
+remote: Verifying deploy... done.
+```
