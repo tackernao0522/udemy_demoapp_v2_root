@@ -307,3 +307,38 @@ postgres                 13.1-alpine   8c6053d81a45   13 months ago        159MB
 ```
 
 - `root $ docker image prune -f`を実行(古い imgae を削除する)<br>
+
+## 27 Rails HerokuCLI-manifest を使ってアプリを構築する 〜デプロイ準備編〜
+
+- `root $ heroku login`を実行<br>
+
+* heroku: Press any key to open up the browser to login or q to exit: `Enter`を実行<br>
+
+- ブラウザが開きログインをする<br>
+
+* `root $ heroku update beta`を実行<br>
+
+- `root $ heroku plugins:install @heroku-cli/plugin-manifest`を実行<br>
+
+* `root $ heroku plugins`を実行して確認(下記のようになれば OK)<br>
+
+```:terminal
+heroku-repo 1.0.14
+manifest 0.0.5
+```
+
+ちなみに plugin を削除するコマンドは `$ heroku plugins:remove manifest`<br>
+
+beta 版から安定版に戻す場合は `$ hroku update stable`<br>
+
+- `root $ cd api`を実行<br>
+
+* `api $ heroku create udemy-railsnuxtv2-api --manifest`(アンダーバーは不可)を実行<br>
+
+- `api $ heroku open`を実行<br>
+
+* Heroku のダッシュボードを開く<br>
+
+- `udemy-railsnuxtv2-api`を開く(add-ons が設定されているか確認する)<br>
+
+* `Settings`の`Config Vars`の`Reveal Config Vars`をクリックする(5 個の値が設定されていれば OK)<br>
