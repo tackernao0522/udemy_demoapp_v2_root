@@ -194,3 +194,98 @@ run:
 ```
 
 - `front`ディレクリを git commit する<br>
+
+## 31 Nuxt.js Heroku にアプリを作成しプロジェクトを Push する 〜デプロイ編〜
+
+- `front $ heroku create udemy-railsnuxtv2-front --manifest`を実行<br>
+
+```:terminal
+Reading heroku.yml manifest... done
+Creating ⬢ udemy-railsnuxtv2-front... done, stack is container
+Setting config vars... done
+https://udemy-railsnuxtv2-front.herokuapp.com/ | https://git.heroku.com/udemy-railsnuxtv2-front.git
+```
+
+- `front $ heroku stack`を実行して container になっているか確認<br>
+
+```:terminal
+=== ⬢ udemy-railsnuxtv2-front Available Stacks
+* container
+  heroku-18
+  heroku-20
+```
+
+- `front $ heroku config`を実行して環境変数を確認<br>
+
+```:terminal
+=== udemy-railsnuxtv2-front Config Vars
+NODE_ENV: production
+```
+
+- `front $ git remote -v`で現在のリモートリポジトリを確認<br>
+
+```:terminal
+heroku  https://git.heroku.com/udemy-railsnuxtv2-front.git (fetch)
+heroku  https://git.heroku.com/udemy-railsnuxtv2-front.git (push)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_front.git (fetch)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_front.git (push)
+```
+
+- `front $ git remote remove heroku`を実行して heroku remote を削除<br>
+
+* `front $ git remote -v`を実行<br>
+
+```:terminal
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_front.git (fetch)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_front.git (push)
+```
+
+- `front $ git remote add heroku git@heroku.com:udemy-railsnuxtv2-front.git`を実行<br>
+
+- `front $ git remote -v`を実行<br>
+
+```:terminal
+heroku  git@heroku.com:udemy-railsnuxtv2-front.git (fetch)
+heroku  git@heroku.com:udemy-railsnuxtv2-front.git (push)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_front.git (fetch)
+origin  git@github.com:tackernao0522/udemy_demoapp_v2_front.git (push)
+```
+
+- `front $ git push heroku main`を実行<br>
+
+```:terminal
+remote: latest: digest: sha256:1ae1ab3f258a528dabc27e5f5aa71f22009798e0d7a8f4101a64f96ce479f803 size: 2203
+remote:
+remote: Verifying deploy... done.
+To heroku.com:udemy-railsnuxtv2-front.git
+ * [new branch]      main -> main
+```
+
+- `front $ heroku open`を実行<br>
+
+* `$ cd api`を実行<br>
+
+- `api $ heroku config:set API_DOMAIN=udemy-railsnuxtv2-front.herokuapp.com`を実行<br>
+
+```:terminal
+Setting API_DOMAIN and restarting ⬢ udemy-railsnuxtv2-api... done, v8
+API_DOMAIN: udemy-railsnuxtv2-front.herokuapp.com
+```
+
+- `api $ heroku config`を実行して確認<br>
+
+```:terminal
+API_DOMAIN:               udemy-railsnuxtv2-front.herokuapp.com
+DATABASE_URL:             postgres://ojvtalfglzoyht:dc62033f03237c4e32f7eb647da68c74459425ab66da79dbf18c0ead742bceb6@ec2-52-44-209-165.compute-1.amazonaws.com:5432/d6jqvf0m4deanr
+RACK_ENV:                 production
+RAILS_ENV:                production
+RAILS_LOG_TO_STDOUT:      enabled
+RAILS_MASTER_KEY:         83776cbdbec83d15dfe1acddc2d6f30e
+RAILS_SERVE_STATIC_FILES: enabled
+```
+
+- `cd front`を実行<br>
+
+- `front $ heroku open`を実行(正常に動くようになる)<br>
+
+* root ディレクトリを github に push しておく<br>
