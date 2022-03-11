@@ -363,3 +363,60 @@ irb(main):002:0> Time.now
 ```
 
 - `root $ exit`を実行して抜けておく<br>
+
+## 33 Rails データベースのタイムゾーン設定
+
+- `api/config/application.rb`を編集<br>
+
+```rb:application.rb
+require_relative 'boot'
+
+require 'rails' # Pick the frameworks you want:
+require 'active_model/railtie'
+require 'active_job/railtie'
+require 'active_record/railtie'
+require 'active_storage/engine'
+require 'action_controller/railtie'
+require 'action_mailer/railtie'
+require 'action_mailbox/engine'
+require 'action_text/engine'
+require 'action_view/railtie'
+require 'action_cable/engine' # require "sprockets/railtie"
+require 'rails/test_unit/railtie'
+
+# Require the gems listed in Gemfile, including any gems
+# you've limited to :test, :development, or :production.
+Bundler.require(*Rails.groups)
+
+module App
+  class Application < Rails::Application # Initialize configuration defaults for originally generated Rails version.
+    config.load_defaults 6.0
+
+    # Railsアプリのタイムゾーン(default 'UTC')
+    # TimeZoneList: http://api.rubyonrails.org/classes/ActiveSupport/TimeZone.html
+    config.time_zone = ENV['TZ']
+
+    # 追加
+    # データベースの読み書きに使用するタイムゾーン(:local | :utc(default))
+    config.active_record.default_timezone = :utc # localかutcを指定できる 今回はpostgreSQLのTZに合わせてutcを指定
+
+    config.api_only = true
+  end
+end
+```
+
+- `root $ docker compose run --rm api rails c`を実行<br>
+
+* `irb(main):001:0> Time.local(2022).zone ｀を実行<br>
+
+```:terminal
+irb(main):001:0> Time.local(2022).zone
+=> "JST"
+```
+
+### active_record.default_timezone の挙動
+
+|    今     | 書き込み |     DB 保存時間      | 読み込み |                       表示                        |
+| :-------: | :------: | :------------------: | :------: | :-----------------------------------------------: |
+| 9:00(JST) |   :utc   | UTC に戻す<br>- 9:00 |   0:00   | UTC と認識/config.timezone で指定した値<br>+ 9:00 | 9:00<br>(JST) |
+| 9:00(JST) |  :local  |       そのまま       |   9:00   |            ローカル時間と認識/そのまま            | 9:00<br>(JST) |
