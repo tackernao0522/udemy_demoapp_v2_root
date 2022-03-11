@@ -289,3 +289,77 @@ RAILS_SERVE_STATIC_FILES: enabled
 - `front $ heroku open`を実行(正常に動くようになる)<br>
 
 * root ディレクトリを github に push しておく<br>
+
+# セクション 7: モデル開発事前準備
+
+## 32 Rails アプリケーションのタイムゾーン設定<br>
+
+- `root $ docker compose run --rm api rails c`を実行<br>
+
+* `irb(main):001:0> Time.now`を実行<br>
+
+```:terminal
+=> 2022-03-11 17:18:11.32931774 +0900
+```
+
+- `irb(main):002:0> Time.current`を実行<br>
+
+```:terminal
+=> Fri, 11 Mar 2022 08:19:46 UTC +00:00
+```
+
+- `api/config/application.rb`を編集<br>
+
+```rb:application.rb
+require_relative 'boot'
+
+require 'rails' # Pick the frameworks you want:
+require 'active_model/railtie'
+require 'active_job/railtie'
+require 'active_record/railtie'
+require 'active_storage/engine'
+require 'action_controller/railtie'
+require 'action_mailer/railtie'
+require 'action_mailbox/engine'
+require 'action_text/engine'
+require 'action_view/railtie'
+require 'action_cable/engine' # require "sprockets/railtie"
+require 'rails/test_unit/railtie'
+
+# Require the gems listed in Gemfile, including any gems
+# you've limited to :test, :development, or :production.
+Bundler.require(*Rails.groups)
+
+module App
+  class Application < Rails::Application # Initialize configuration defaults for originally generated Rails version.
+    config.load_defaults 6.0
+
+    # 追加
+    # Railsアプリのタイムゾーン(default 'UTC')
+    # TimeZoneList: http://api.rubyonrails.org/classes/ActiveSupport/TimeZone.html
+    config.time_zone = ENV['TZ']
+
+    config.api_only = true
+  end
+end
+```
+
+- `root $ exit`を実行<br>
+
+* `root $ docker compose run --rm api rails c`を実行<br>
+
+- `irb(main):001:0> Time.current`を実行<br>
+
+```:terminal
+irb(main):001:0> Time.current
+=> Fri, 11 Mar 2022 17:26:17 JST +09:00 // JSTに変わっていればOK
+```
+
+- `irb(main):002:0> Time.now`を実行<br>
+
+```:terminal
+irb(main):002:0> Time.now
+=> 2022-03-11 17:27:55.128819128 +0900 // このようになっていればOK
+```
+
+- `root $ exit`を実行して抜けておく<br>
