@@ -420,3 +420,169 @@ irb(main):001:0> Time.local(2022).zone
 | :-------: | :------: | :------------------: | :------: | :-----------------------------------------------: |
 | 9:00(JST) |   :utc   | UTC に戻す<br>- 9:00 |   0:00   | UTC と認識/config.timezone で指定した値<br>+ 9:00 | 9:00<br>(JST) |
 | 9:00(JST) |  :local  |       そのまま       |   9:00   |            ローカル時間と認識/そのまま            | 9:00<br>(JST) |
+
+## 34 Rails の i18n とオートロードパスの設定をする
+
+- `api/config/application.rb`を編集<br>
+
+```rb:application.rb
+require_relative 'boot'
+
+require 'rails' # Pick the frameworks you want:
+require 'active_model/railtie'
+require 'active_job/railtie'
+require 'active_record/railtie'
+require 'active_storage/engine'
+require 'action_controller/railtie'
+require 'action_mailer/railtie'
+require 'action_mailbox/engine'
+require 'action_text/engine'
+require 'action_view/railtie'
+require 'action_cable/engine' # require "sprockets/railtie"
+require 'rails/test_unit/railtie'
+
+# Require the gems listed in Gemfile, including any gems
+# you've limited to :test, :development, or :production.
+Bundler.require(*Rails.groups)
+
+module App
+  class Application < Rails::Application # Initialize configuration defaults for originally generated Rails version.
+    config.load_defaults 6.0
+
+    # Railsアプリのタイムゾーン(default 'UTC')
+    # TimeZoneList: http://api.rubyonrails.org/classes/ActiveSupport/TimeZone.html
+    config.time_zone = ENV['TZ']
+
+    # データベースの読み書きに使用するタイムゾーン(:local | :utc(default))
+    config.active_record.default_timezone = :utc
+
+    # 追加
+    # i18nで使われるデフォルトのロケールファイルの指定(default :en)
+    config.i18n.default_locale = :ja
+
+    # 追加
+    # $LOAD_PATHにautoload pathを追加しない(Zeitwerk有効時false推奨)
+    config.add_autoload_paths_to_load_path = false
+
+    config.api_only = true
+  end
+end
+```
+
+- `root $ docker compose run --rm api rails c`を実行<br>
+
+* `irb(main):001:0> pp $LOAD_PATH`を実行<br>
+
+```:terminal
+irb(main):001:0> pp $LOAD_PATH
+["/app/lib",
+ "/app/vendor",
+ "/usr/local/bundle/gems/actioncable-6.0.4.6/lib",
+ "/usr/local/bundle/gems/actiontext-6.0.4.6/lib",
+ "/usr/local/bundle/gems/actionmailbox-6.0.4.6/lib",
+ "/usr/local/bundle/gems/activestorage-6.0.4.6/lib",
+ "/usr/local/bundle/gems/actionview-6.0.4.6/lib",
+ "/usr/local/bundle/gems/spring-watcher-listen-2.0.1/lib",
+ "/usr/local/bundle/gems/spring-2.1.1/lib",
+ "/usr/local/bundle/gems/rails-6.0.4.6/lib",
+ "/usr/local/bundle/gems/sprockets-rails-3.4.2/lib",
+ "/usr/local/bundle/gems/sprockets-4.0.3/lib",
+ "/usr/local/bundle/gems/railties-6.0.4.6/lib",
+ "/usr/local/bundle/gems/thor-1.2.1/lib",
+ "/usr/local/bundle/gems/rack-cors-1.1.1/lib",
+ "/usr/local/bundle/gems/puma-4.3.11/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/puma-4.3.11",
+ "/usr/local/bundle/gems/pg-1.3.3/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/pg-1.3.3",
+ "/usr/local/bundle/gems/method_source-1.0.0/lib",
+ "/usr/local/bundle/gems/listen-3.7.1/lib",
+ "/usr/local/bundle/gems/rb-inotify-0.10.1/lib",
+ "/usr/local/bundle/gems/rb-fsevent-0.11.1/lib",
+ "/usr/local/bundle/gems/ffi-1.15.5/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/ffi-1.15.5",
+ "/usr/local/bundle/gems/byebug-11.1.3/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/byebug-11.1.3",
+ "/usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/lib",
+ "/usr/local/bundle/gems/bootsnap-1.10.3/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/bootsnap-1.10.3",
+ "/usr/local/bundle/gems/msgpack-1.4.5/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/msgpack-1.4.5",
+ "/usr/local/bundle/gems/actionmailer-6.0.4.6/lib",
+ "/usr/local/bundle/gems/mail-2.7.1/lib",
+ "/usr/local/bundle/gems/mini_mime-1.1.2/lib",
+ "/usr/local/bundle/gems/marcel-1.0.2/lib",
+ "/usr/local/bundle/gems/activerecord-6.0.4.6/lib",
+ "/usr/local/bundle/gems/activemodel-6.0.4.6/lib",
+ "/usr/local/bundle/gems/activejob-6.0.4.6/lib",
+ "/usr/local/bundle/gems/globalid-1.0.0/lib",
+ "/usr/local/bundle/gems/websocket-driver-0.7.5/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/websocket-driver-0.7.5",
+ "/usr/local/bundle/gems/websocket-extensions-0.1.5/lib",
+ "/usr/local/bundle/gems/nio4r-2.5.8/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/nio4r-2.5.8",
+ "/usr/local/bundle/gems/actionpack-6.0.4.6/lib",
+ "/usr/local/bundle/gems/rack-test-1.1.0/lib",
+ "/usr/local/bundle/gems/rack-2.2.3/lib",
+ "/usr/local/bundle/gems/rails-html-sanitizer-1.4.2/lib",
+ "/usr/local/bundle/gems/loofah-2.14.0/lib",
+ "/usr/local/bundle/gems/crass-1.0.6/lib",
+ "/usr/local/bundle/gems/rails-dom-testing-2.0.3/lib",
+ "/usr/local/bundle/gems/nokogiri-1.13.3-x86_64-linux/lib",
+ "/usr/local/bundle/gems/racc-1.6.0/lib",
+ "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/racc-1.6.0",
+ "/usr/local/bundle/gems/mini_portile2-2.8.0/lib",
+ "/usr/local/bundle/gems/erubi-1.10.0/lib",
+ "/usr/local/bundle/gems/builder-3.2.4/lib",
+ "/usr/local/bundle/gems/activesupport-6.0.4.6/lib",
+ "/usr/local/bundle/gems/zeitwerk-2.5.4/lib",
+ "/usr/local/bundle/gems/tzinfo-1.2.9/lib",
+ "/usr/local/bundle/gems/thread_safe-0.3.6/lib",
+ "/usr/local/bundle/gems/minitest-5.15.0/lib",
+ "/usr/local/bundle/gems/i18n-1.10.0/lib",
+ "/usr/local/bundle/gems/concurrent-ruby-1.1.9/lib/concurrent-ruby",
+ "/usr/local/bundle/gems/rake-13.0.6/lib",
+ "/usr/local/lib/ruby/site_ruby/2.7.0",
+ "/usr/local/lib/ruby/site_ruby/2.7.0/x86_64-linux-musl",
+ "/usr/local/lib/ruby/site_ruby",
+ "/usr/local/lib/ruby/vendor_ruby/2.7.0",
+ "/usr/local/lib/ruby/vendor_ruby/2.7.0/x86_64-linux-musl",
+ "/usr/local/lib/ruby/vendor_ruby",
+ "/usr/local/lib/ruby/2.7.0",
+ "/usr/local/lib/ruby/2.7.0/x86_64-linux-musl"]
+=> ["/app/lib", "/app/vendor", "/usr/local/bundle/gems/actioncable-6.0.4.6/lib", "/usr/local/bundle/gems/actiontext-6.0.4.6/lib", "/usr/local/bundle/gems/actionmailbox-6.0.4.6/lib", "/usr/local/bundle/gems/activestorage-6.0.4.6/lib", "/usr/local/bundle/gems/actionview-6.0.4.6/lib", "/usr/local/bundle/gems/spring-watcher-listen-2.0.1/lib", "/usr/local/bundle/gems/spring-2.1.1/lib", "/usr/local/bundle/gems/rails-6.0.4.6/lib", "/usr/local/bundle/gems/sprockets-rails-3.4.2/lib", "/usr/local/bundle/gems/sprockets-4.0.3/lib", "/usr/local/bundle/gems/railties-6.0.4.6/lib", "/usr/local/bundle/gems/thor-1.2.1/lib", "/usr/local/bundle/gems/rack-cors-1.1.1/lib", "/usr/local/bundle/gems/puma-4.3.11/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/puma-4.3.11", "/usr/local/bundle/gems/pg-1.3.3/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/pg-1.3.3", "/usr/local/bundle/gems/method_source-1.0.0/lib", "/usr/local/bundle/gems/listen-3.7.1/lib", "/usr/local/bundle/gems/rb-inotify-0.10.1/lib", "/usr/local/bundle/gems/rb-fsevent-0.11.1/lib", "/usr/local/bundle/gems/ffi-1.15.5/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/ffi-1.15.5", "/usr/local/bundle/gems/byebug-11.1.3/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/byebug-11.1.3", "/usr/local/lib/ruby/gems/2.7.0/gems/bundler-2.1.4/lib", "/usr/local/bundle/gems/bootsnap-1.10.3/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/bootsnap-1.10.3", "/usr/local/bundle/gems/msgpack-1.4.5/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/msgpack-1.4.5", "/usr/local/bundle/gems/actionmailer-6.0.4.6/lib", "/usr/local/bundle/gems/mail-2.7.1/lib", "/usr/local/bundle/gems/mini_mime-1.1.2/lib", "/usr/local/bundle/gems/marcel-1.0.2/lib", "/usr/local/bundle/gems/activerecord-6.0.4.6/lib", "/usr/local/bundle/gems/activemodel-6.0.4.6/lib", "/usr/local/bundle/gems/activejob-6.0.4.6/lib", "/usr/local/bundle/gems/globalid-1.0.0/lib", "/usr/local/bundle/gems/websocket-driver-0.7.5/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/websocket-driver-0.7.5", "/usr/local/bundle/gems/websocket-extensions-0.1.5/lib", "/usr/local/bundle/gems/nio4r-2.5.8/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/nio4r-2.5.8", "/usr/local/bundle/gems/actionpack-6.0.4.6/lib", "/usr/local/bundle/gems/rack-test-1.1.0/lib", "/usr/local/bundle/gems/rack-2.2.3/lib", "/usr/local/bundle/gems/rails-html-sanitizer-1.4.2/lib", "/usr/local/bundle/gems/loofah-2.14.0/lib", "/usr/local/bundle/gems/crass-1.0.6/lib", "/usr/local/bundle/gems/rails-dom-testing-2.0.3/lib", "/usr/local/bundle/gems/nokogiri-1.13.3-x86_64-linux/lib", "/usr/local/bundle/gems/racc-1.6.0/lib", "/usr/local/bundle/extensions/x86_64-linux-musl/2.7.0/racc-1.6.0", "/usr/local/bundle/gems/mini_portile2-2.8.0/lib", "/usr/local/bundle/gems/erubi-1.10.0/lib", "/usr/local/bundle/gems/builder-3.2.4/lib", "/usr/local/bundle/gems/activesupport-6.0.4.6/lib", "/usr/local/bundle/gems/zeitwerk-2.5.4/lib", "/usr/local/bundle/gems/tzinfo-1.2.9/lib", "/usr/local/bundle/gems/thread_safe-0.3.6/lib", "/usr/local/bundle/gems/minitest-5.15.0/lib", "/usr/local/bundle/gems/i18n-1.10.0/lib", "/usr/local/bundle/gems/concurrent-ruby-1.1.9/lib/concurrent-ruby", "/usr/local/bundle/gems/rake-13.0.6/lib", "/usr/local/lib/ruby/site_ruby/2.7.0", "/usr/local/lib/ruby/site_ruby/2.7.0/x86_64-linux-musl", "/usr/local/lib/ruby/site_ruby", "/usr/local/lib/ruby/vendor_ruby/2.7.0", "/usr/local/lib/ruby/vendor_ruby/2.7.0/x86_64-linux-musl", "/usr/local/lib/ruby/vendor_ruby", "/usr/local/lib/ruby/2.7.0", "/usr/local/lib/ruby/2.7.0/x86_64-linux-musl"]
+irb(main):002:0>
+```
+
+- `irb(main):002:0> pp ActiveSupport::Dependencies.autoload_paths`を実行<br>
+
+```:terminal
+irb(main):002:0> pp ActiveSupport::Dependencies.autoload_paths
+["/app/app/channels",
+ "/app/app/controllers",
+ "/app/app/controllers/concerns",
+ "/app/app/jobs",
+ "/app/app/mailers",
+ "/app/app/models",
+ "/app/app/models/concerns",
+ "/usr/local/bundle/gems/actiontext-6.0.4.6/app/helpers",
+ "/usr/local/bundle/gems/actiontext-6.0.4.6/app/models",
+ "/usr/local/bundle/gems/actionmailbox-6.0.4.6/app/controllers",
+ "/usr/local/bundle/gems/actionmailbox-6.0.4.6/app/jobs",
+ "/usr/local/bundle/gems/actionmailbox-6.0.4.6/app/models",
+ "/usr/local/bundle/gems/activestorage-6.0.4.6/app/controllers",
+ "/usr/local/bundle/gems/activestorage-6.0.4.6/app/controllers/concerns",
+ "/usr/local/bundle/gems/activestorage-6.0.4.6/app/jobs",
+ "/usr/local/bundle/gems/activestorage-6.0.4.6/app/models",
+ "/app/test/mailers/previews"]
+=> ["/app/app/channels", "/app/app/controllers", "/app/app/controllers/concerns", "/app/app/jobs", "/app/app/mailers", "/app/app/models", "/app/app/models/concerns", "/usr/local/bundle/gems/actiontext-6.0.4.6/app/helpers", "/usr/local/bundle/gems/actiontext-6.0.4.6/app/models", "/usr/local/bundle/gems/actionmailbox-6.0.4.6/app/controllers", "/usr/local/bundle/gems/actionmailbox-6.0.4.6/app/jobs", "/usr/local/bundle/gems/actionmailbox-6.0.4.6/app/models", "/usr/local/bundle/gems/activestorage-6.0.4.6/app/controllers", "/usr/local/bundle/gems/activestorage-6.0.4.6/app/controllers/concerns", "/usr/local/bundle/gems/activestorage-6.0.4.6/app/jobs", "/usr/local/bundle/gems/activestorage-6.0.4.6/app/models", "/app/test/mailers/previews"]
+irb(main):003:0>
+```
+
+- `irb(main):003:0> Rails.autoloaders.zeitwerk_enabled?`を実行<br>
+  true になれば zeitwerk が有効である<br>
+
+```:terminal
+irb(main):003:0> Rails.autoloaders.zeitwerk_enabled?
+=> true
+irb(main):004:0>
+```
