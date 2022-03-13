@@ -255,3 +255,44 @@ irb(main):004:0> puts Hirb::Helpers::Table.render [{:age=>10, :weight=>100}, {:a
 => nil
 irb(main):005:0>
 ```
+
+- `api $ git push heroku`を実行<br>
+
+- `api $ heroku run rails c`を実行<br>
+
+- `irb(main):001:0> puts Hirb::Helpers::Table.render [[1,2], [2,3]]`を実行<br>
+
+```:terminal
+irb(main):001:0> puts Hirb::Helpers::Table.render [[1,2], [2,3]]
++---+---+
+| 0 | 1 |
++---+---+
+| 1 | 2 |
+| 2 | 3 |
++---+---+
+2 rows in set
+=> nil
+irb(main):002:0>
+```
+
+# セクション 8: ユーザーモデル開発
+
+## 36 ユーザーテーブル設計と認証設計を理解する
+
+### ユーザーテーブル設計
+
+|     カラム      |   型    | デフォルト | NULL  | 長さ |       内容       |
+| :-------------: | :-----: | :--------: | :---: | :--: | :--------------: |
+|      name       | String  |            | false |  30  |    ユーザー名    |
+|      email      | String  |            | false | 255  |  メールアドレス  |
+| password_digest | String  |            | false |  72  |    パスワード    |
+|    activated    | Boolean |   false    | false |      | メール認証フラグ |
+|      admin      | Boolean |   false    | false |      |   管理者フラグ   |
+
+### Email のバリデーション
+
+`OK => activated = false && user.email == email`<br>
+
+`NG => activated = true && user.email == email`<br>
+
+認証済みメールアドレスの一意性を保つ<br>
