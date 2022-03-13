@@ -296,3 +296,75 @@ irb(main):002:0>
 `NG => activated = true && user.email == email`<br>
 
 認証済みメールアドレスの一意性を保つ<br>
+
+## 37. User テーブルを作成する
+
+- `root $ docker-compose run --rm api rails g model User --no-fixture`を実行<br>
+
+* `api/db/migrate/xxx_create_users.rb`を編集<br>
+
+```rb:xxx_create_users.rb
+class CreateUsers < ActiveRecord::Migration[6.0]
+  def change
+    create_table :users do |t|
+      t.string :name, null: false
+      t.string :email, null: false
+      t.string :password_digest, null: false
+      t.boolean :activated, null: false, default: false
+      t.boolean :admin, null: false, default: false
+      t.timestamps
+    end
+  end
+end
+```
+
+- `root $ docker-compose run --rm api rails db:migrate`を実行<br>
+
+* `root $ docker compose run --rm api rails dbconsole`を実行<br>
+
+```:terminal
+/app # rails dbconsole
+Password for user postgres: password
+```
+
+- `password`を入力して`Enter`<br>
+
+```:terminal
+/app # rails dbconsole
+Password for user postgres:
+psql (13.6, server 13.1)
+Type "help" for help.
+
+app_development=#
+```
+
+- `app_development=# \d`を実行<br>
+
+```:terminal
+                  List of relations
+ Schema |         Name         |   Type   |  Owner
+--------+----------------------+----------+----------
+ public | ar_internal_metadata | table    | postgres
+ public | schema_migrations    | table    | postgres
+ public | users                | table    | postgres
+ public | users_id_seq         | sequence | postgres
+(4 rows)
+```
+
+- `app_development=# \d users`を実行<br>
+
+```:terminal
+                                            Table "public.users"
+     Column      |              Type              | Collation | Nullable |              Default
+-----------------+--------------------------------+-----------+----------+-----------------------------------
+ id              | bigint                         |           | not null | nextval('users_id_seq'::regclass)
+ name            | character varying              |           | not null |
+ email           | character varying              |           | not null |
+ password_digest | character varying              |           | not null |
+ activated       | boolean                        |           | not null | false
+ admin           | boolean                        |           | not null | false
+ created_at      | timestamp(6) without time zone |           | not null |
+ updated_at      | timestamp(6) without time zone |           | not null |
+Indexes:
+    "users_pkey" PRIMARY KEY, btree (id)
+```
