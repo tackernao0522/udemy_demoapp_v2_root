@@ -428,6 +428,6 @@ class User < ApplicationRecord
                         with: VALID_PASSWORD_REGEX,
                         allow_blank: true
                       },
-                      allow_nil true # 空パスワードのアップデートを許容する。(Null(nil)の場合スキップ)
+                      allow_nil: true # 空パスワードのアップデートを許容する。(Null(nil)の場合スキップ)
 end
 ```
