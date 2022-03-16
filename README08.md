@@ -376,3 +376,672 @@ class ActiveSupport::TestCase # プロセスが分岐した直後に呼び出さ
   parallelize(workers: :number_of_processors) # 以下削除
 end
 ```
+
+## 43 User モデルバリデーションテスト Part1
+
+- `api/test/test_helper.rb`を編集<br>
+
+```rb:test_helper.rb
+ENV['RAILS_ENV'] ||= 'test'
+require_relative '../config/environment'
+require 'rails/test_help'
+
+# gem minitest-reporters setup
+require 'minitest/reporters'
+Minitest::Reporters.use!
+
+class ActiveSupport::TestCase # プロセスが分岐した直後に呼び出される # # 並列テスト ... 複数のプロセスを分岐させテスト時間の短縮を行う機能
+  parallelize_setup do |worker|
+    load # seedデータの読み込み
+    "#{Rails.root}/db/seeds.rb"
+  end
+
+  # Run tests in parallel with specified workers
+  # 並列テストの有効化・無効化
+  # workers: プロセス数を渡す(2以上 => 有効、2未満 => 無効)
+  # number_of_processors => 使用しているマシンのコア数(2)
+  parallelize(workers: :number_of_processors) # parallelize(workers: 1) # 並列テストを無効にしたい場合
+
+  # 追加
+  # アクティブなユーザーを返す
+  def active_user
+    User.find_by(activated: true)
+  end
+end
+```
+
+- `api/test/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages) # 文字数30文字まで
+  end
+end
+```
+
+- `root $ docker compose run --rm api rails t`を実行<br>
+
+```:terminal
+Started with run options --seed 30179
+
+users...                                                                                                                                                                     ] 0% Time: 00:00:00,  ETA: ??:??:??
+users...
+users = 10
+users = 10
+  1/1: [===================================================================================================================================================================] 100% Time: 00:00:01, Time: 00:00:01
+
+Finished in 1.77807s
+1 tests, 1 assertions, 0 failures, 0 errors, 0 skips
+```
+
+- `api/test/models/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 文字数30文字まで
+    max = 30
+    name = 'a' * (max + 1)
+    user.name = name
+    user.save
+    maxlength_msg = %w[名前は30文字以内で入力してください]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+  end
+end
+```
+
+- `root \$ docker compose run --rm api rails t`を実行<br>
+
+```:terminal
+Started with run options --seed 24901
+
+users...                                                                                                                                                                     ] 0% Time: 00:00:00,  ETA: ??:??:??
+users...
+users = 10
+  1/1: [===================================================================================================================================================================] 100% Time: 00:00:01, Time: 00:00:01
+users = 10
+
+Finished in 1.51628s
+1 tests, 2 assertions, 0 failures, 0 errors, 0 skips
+```
+
+- `api/test/models/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 文字数30文字まで
+    max = 30
+    name = 'a' * (max + 1)
+    user.name = name
+    user.save
+    maxlength_msg = %w[名前は30文字以内で入力してください]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 30文字以内のユーザーは保存できているか
+    name = 'あ' * max
+    user.name = name
+    assert_difference('User.count', 1) { user.save }
+  end
+end
+```
+
+- `root \$ docker compose run --rm api rails t`を実行<br>
+
+```:terminal
+Started with run options --seed 530
+
+users...                                                                                                                                                                     ] 0% Time: 00:00:00,  ETA: ??:??:??
+users...
+users = 10
+users = 10
+  1/1: [===================================================================================================================================================================] 100% Time: 00:00:01, Time: 00:00:01
+
+Finished in 1.68639s
+1 tests, 3 assertions, 0 failures, 0 errors, 0 skips
+```
+
+- `api/test/models/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 文字数30文字まで
+    max = 30
+    name = 'a' * (max + 1)
+    user.name = name
+    user.save
+    maxlength_msg = %w[名前は30文字以内で入力してください]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 30文字以内のユーザーは保存できているか
+    name = 'あ' * max
+    user.name = name
+    assert_difference('User.count', 1) { user.save }
+  end
+
+  test 'email_validation' do
+    # 入力必須
+    user = User.new(name: 'test', password: 'password')
+    user.save
+    required_msg = %w[メールアドレスを入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 255文字制限
+    max = 255
+    domain = '@example.com'
+    email = 'a' * (max + 1 - domain.length) + domain
+    byebug # assert_equal(maxlength_msg, user.errors.full_messages) # maxlength_msg = ["メールアドレスは255文字以内で入力してください"] # user.save # user.email = email
+
+    # 正しい書式は保存できているか
+    # 間違った書式はエラーを吐いているか
+  end
+end
+```
+
+- `root \$ docker compose run --rm api rails t`を実行<br>
+
+* `(byebug) email`を実行<br>
+
+```:terminal
+(byebug) email
+"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa@example.com"
+(byebug)
+```
+
+- `(byebug) email.length`を実行<br>
+
+```:terminal
+256
+(byebug)
+```
+
+- `api/test/models/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 文字数30文字まで
+    max = 30
+    name = 'a' * (max + 1)
+    user.name = name
+    user.save
+    maxlength_msg = %w[名前は30文字以内で入力してください]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 30文字以内のユーザーは保存できているか
+    name = 'あ' * max
+    user.name = name
+    assert_difference('User.count', 1) { user.save }
+  end
+
+  test 'email_validation' do
+    # 入力必須
+    user = User.new(name: 'test', password: 'password')
+    user.save
+    required_msg = %w[メールアドレスを入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 255文字制限
+    max = 255
+    domain = '@example.com'
+    email = 'a' * (max + 1 - domain.length) + domain
+    assert max < email.length
+
+    user.email = email
+    user.save
+    maxlength_msg = ["メールアドレスは#{max}文字以内で入力してください"]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 正しい書式は保存できているか
+    # 間違った書式はエラーを吐いているか
+  end
+end
+```
+
+- `root \$ docker compose run --rm api rails t`を実行<br>
+
+```:terminal
+Started with run options --seed 37535
+
+users...                                                                                                                                                                     ] 0% Time: 00:00:00,  ETA: ??:??:??
+users...
+users = 10
+users = 10
+  2/2: [===================================================================================================================================================================] 100% Time: 00:00:01, Time: 00:00:01
+
+Finished in 1.70564s
+2 tests, 6 assertions, 0 failures, 0 errors, 0 skips
+```
+
+- `api/test/models/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 文字数30文字まで
+    max = 30
+    name = 'a' * (max + 1)
+    user.name = name
+    user.save
+    maxlength_msg = %w[名前は30文字以内で入力してください]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 30文字以内のユーザーは保存できているか
+    name = 'あ' * max
+    user.name = name
+    assert_difference('User.count', 1) { user.save }
+  end
+
+  test 'email_validation' do
+    # 入力必須
+    user = User.new(name: 'test', password: 'password')
+    user.save
+    required_msg = %w[メールアドレスを入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 255文字制限
+    max = 255
+    domain = '@example.com'
+    email = 'a' * (max + 1 - domain.length) + domain
+    assert max < email.length
+
+    user.email = email
+    user.save
+    maxlength_msg = ["メールアドレスは#{max}文字以内で入力してください"]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 正しい書式は保存できているか
+    ok_emails = %w[A@A.com]
+    ok_emails.each do |email|
+      user.email = email # assert_difference('User.count', 1) { user.save }
+      assert user.save # これでも良い
+    end
+
+    # 間違った書式はエラーを吐いているか
+  end
+end
+```
+
+- `root \$ docker compose run --rm api rails t`を実行<br>
+
+```:terminal
+Started with run options --seed 46229
+
+users...---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=-] 0% Time: 00:00:00,  ETA: ??:??:??
+users...
+users = 10
+users = 10
+  2/2: [===================================================================================================================================================================] 100% Time: 00:00:01, Time: 00:00:01
+
+Finished in 1.54716s
+2 tests, 7 assertions, 0 failures, 0 errors, 0 skips
+```
+
+- `api/test/models/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 文字数30文字まで
+    max = 30
+    name = 'a' * (max + 1)
+    user.name = name
+    user.save
+    maxlength_msg = %w[名前は30文字以内で入力してください]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 30文字以内のユーザーは保存できているか
+    name = 'あ' * max
+    user.name = name
+    assert_difference('User.count', 1) { user.save }
+  end
+
+  test 'email_validation' do
+    # 入力必須
+    user = User.new(name: 'test', password: 'password')
+    user.save
+    required_msg = %w[メールアドレスを入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 255文字制限
+    max = 255
+    domain = '@example.com'
+    email = 'a' * (max + 1 - domain.length) + domain
+    assert max < email.length
+
+    user.email = email
+    user.save
+    maxlength_msg = ["メールアドレスは#{max}文字以内で入力してください"]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 正しい書式は保存できているか
+    ok_emails = %w[
+      A@EX.COM
+      a-_@e-x.c-o_m.j_p
+      a.a@ex.com
+      a@e.co.js
+      1.1@ex.com
+      a.a+a@ex.com
+    ]
+    ok_emails.each do |email|
+      user.email = email
+      assert user.save
+    end # 間違った書式はエラーを吐いているか
+  end
+end
+```
+
+- `root \$ docker compose run --rm api rails t`を実行<br>
+
+```:terminal
+Started with run options --seed 30360
+
+users...                                                                                                                                                                     ] 0% Time: 00:00:00,  ETA: ??:??:??
+users...
+users = 10
+users = 10
+  2/2: [===================================================================================================================================================================] 100% Time: 00:00:01, Time: 00:00:01
+
+Finished in 1.88269s
+2 tests, 12 assertions, 0 failures, 0 errors, 0 skips
+```
+
+- `api/test/models/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 文字数30文字まで
+    max = 30
+    name = 'a' * (max + 1)
+    user.name = name
+    user.save
+    maxlength_msg = %w[名前は30文字以内で入力してください]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 30文字以内のユーザーは保存できているか
+    name = 'あ' * max
+    user.name = name
+    assert_difference('User.count', 1) { user.save }
+  end
+
+  test 'email_validation' do
+    # 入力必須
+    user = User.new(name: 'test', password: 'password')
+    user.save
+    required_msg = %w[メールアドレスを入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 255文字制限
+    max = 255
+    domain = '@example.com'
+    email = 'a' * (max + 1 - domain.length) + domain
+    assert max < email.length
+
+    user.email = email
+    user.save
+    maxlength_msg = ["メールアドレスは#{max}文字以内で入力してください"]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 正しい書式は保存できているか
+    ok_emails = %w[
+      A@EX.COM
+      a-_@e-x.c-o_m.j_p
+      a.a@ex.com
+      a@e.co.js
+      1.1@ex.com
+      a.a+a@ex.com
+    ]
+    ok_emails.each do |email|
+      user.email = email
+      assert user.save
+    end
+
+    # 間違った書式はエラーを吐いているか
+    ng_emails = %w[
+      aaa
+      a.ex.com
+      メール@ex.com
+      a~a@ex.com
+      a@|.com
+      a@ex.
+      .a@ex.com
+      a＠ex.com
+      Ａ@ex.com
+      a@?,com
+      １@ex.com
+      "a"@ex.com
+      a@ex@co.jp
+    ]
+    ng_emails.each do |email|
+      user.email = email
+      user.save
+      format_msg = %w[メールアドレスは不正な値です]
+      assert_equal(format_msg, user.errors.full_messages)
+    end
+  end
+end
+```
+
+- `root \$ docker compose run --rm api rails t`を実行<br>
+
+```:terminal
+Started with run options --seed 44414
+
+users...---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=---=-] 0% Time: 00:00:00,  ETA: ??:??:??
+users...
+users = 10
+users = 10
+  2/2: [===================================================================================================================================================================] 100% Time: 00:00:01, Time: 00:00:01
+
+Finished in 1.77206s
+2 tests, 25 assertions, 0 failures, 0 errors, 0 skips
+```
+
+- `api/test/models/user_test.rb`を編集<br>
+
+```rb:user_test.rb
+require 'test_helper'
+
+class UserTest < ActiveSupport::TestCase
+  def setup
+    @user = active_user
+  end
+
+  test 'name_validation' do
+    # 入力必須
+    user = User.new(email: 'test@example.com', password: 'password')
+    user.save
+    required_msg = %w[名前を入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 文字数30文字まで
+    max = 30
+    name = 'a' * (max + 1)
+    user.name = name
+    user.save
+    maxlength_msg = %w[名前は30文字以内で入力してください]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 30文字以内のユーザーは保存できているか
+    name = 'あ' * max
+    user.name = name
+    assert_difference('User.count', 1) { user.save }
+  end
+
+  test 'email_validation' do
+    # 入力必須
+    user = User.new(name: 'test', password: 'password')
+    user.save
+    required_msg = %w[メールアドレスを入力してください]
+    assert_equal(required_msg, user.errors.full_messages)
+
+    # 255文字制限
+    max = 255
+    domain = '@example.com'
+    email = 'a' * (max + 1 - domain.length) + domain
+    assert max < email.length
+
+    user.email = email
+    user.save
+    maxlength_msg = ["メールアドレスは#{max}文字以内で入力してください"]
+    assert_equal(maxlength_msg, user.errors.full_messages)
+
+    # 正しい書式は保存できているか
+    ok_emails = %w[
+      A@EX.COM
+      a-_@e-x.c-o_m.j_p
+      a.a@ex.com
+      a@e.co.js
+      1.1@ex.com
+      a.a+a@ex.com
+    ]
+    ok_emails.each do |email|
+      user.email = email
+      assert user.save
+    end
+
+    # 間違った書式はエラーを吐いているか
+    ng_emails = %w[
+      aaa
+      a.ex.com
+      メール@ex.com
+      a~a@ex.com
+      a@|.com
+      a@ex.
+      .a@ex.com
+      a＠ex.com
+      Ａ@ex.com
+      a@?,com
+      １@ex.com
+      "a"@ex.com
+      a@ex@co.jp
+    ]
+    ng_emails.each do |email|
+      user.email = email
+      user.save
+      format_msg = %w[メールアドレスは不正な値です]
+      assert_equal(format_msg, user.errors.full_messages)
+    end
+  end
+
+  test 'email_downcase' do
+    # emailが小文字化されているか
+    email = 'USER`EXAMPLE.COM'
+    user = User.new(email: email)
+    user.save
+    assert user.email == email.downcase
+  end
+end
+```
+
+- `root \$ docker compose run --rm api rails t`を実行<br>
+
+```:terminal
+Started with run options --seed 57219
+
+users...                                                                                                                                                                     ] 0% Time: 00:00:00,  ETA: ??:??:??
+users...
+users = 10
+users = 10
+  3/3: [===================================================================================================================================================================] 100% Time: 00:00:02, Time: 00:00:02
+
+Finished in 2.19147s
+3 tests, 26 assertions, 0 failures, 0 errors, 0 skips
+```
