@@ -155,3 +155,9 @@ export default {
 - http://localhost:8080/ にアクセスしてみる<br>
 
 * `front $ git push heroku`を実行<br>
+
+- `api $ git push heroku`を実行<br>
+
+* `api $ heroku run db:migrate`を実行<br>
+
+- `api $ hroku run db:seed`を実行<br>
