@@ -161,3 +161,227 @@ export default {
 * `api $ heroku run db:migrate`を実行<br>
 
 - `api $ hroku run db:seed`を実行<br>
+
+# セクション 9: Nuxt.js フロント開発事前準備
+
+- `root $ docker compose run --rm front yarn add --dev @nuxtjs/vuetify`を実行<br>
+
+* `root $ docker compose run --rm front yarn list --pattern @nuxtjs/vuetify`を実行して入っているか確認<br>
+
+```:terminal
+yarn list v1.22.15
+└─ @nuxtjs/vuetify@1.12.3
+Done in 4.42s.
+```
+
+- `front/nuxt.config.js`を編集<br>
+
+```js:nuxt.config.js
+export default {
+  // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
+  ssr: false,
+
+  // Global page headers: https://go.nuxtjs.dev/config-head
+  head: {
+    title: 'app',
+    htmlAttrs: {
+      lang: 'en',
+    },
+    meta: [
+      { charset: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { hid: 'description', name: 'description', content: '' },
+      { name: 'format-detection', content: 'telephone=no' },
+    ],
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  },
+
+  // Global CSS: https://go.nuxtjs.dev/config-css
+  css: [],
+
+  // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
+  plugins: ['plugins/axios'],
+
+  // Auto import components: https://go.nuxtjs.dev/config-components
+  components: true,
+
+  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
+  buildModules: [
+    // https://go.nuxtjs.dev/eslint
+    '@nuxtjs/eslint-module',
+    // 追加
+    // Doc: https://www.npmjs.com/package/@nuxtjs/vuetify
+    '@nuxtjs/vuetify',
+  ],
+
+  // Modules: https://go.nuxtjs.dev/config-modules
+  modules: [
+    // https://go.nuxtjs.dev/axios
+    '@nuxtjs/axios',
+  ],
+
+  // Axios module configuration: https://go.nuxtjs.dev/config-axios
+  axios: {
+    // 環境変数API_URLが優先される
+    // baseURL: '/'
+  },
+
+  // Build Configuration: https://go.nuxtjs.dev/config-build
+  build: {},
+}
+```
+
+- `front $ mkdir assets layouts middleware plugins`を実行<br>
+
+* `front/pages/index.vue`を編集<br>
+
+- `yarn cache clean`<br>
+
+* `front/nuxt.config.js`を編集<br>
+
+```js:nuxt.config.js
+export default {
+  // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
+  ssr: false,
+
+  // Global page headers: https://go.nuxtjs.dev/config-head
+  head: {
+    title: 'app',
+    htmlAttrs: {
+      lang: 'en',
+    },
+    meta: [
+      { charset: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { hid: 'description', name: 'description', content: '' },
+      { name: 'format-detection', content: 'telephone=no' },
+    ],
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  },
+
+  // Global CSS: https://go.nuxtjs.dev/config-css
+  css: [],
+
+  // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
+  plugins: ['plugins/axios'],
+
+  // Auto import components: https://go.nuxtjs.dev/config-components
+  components: true,
+
+  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
+  buildModules: [
+    // https://go.nuxtjs.dev/eslint
+    '@nuxtjs/eslint-module',
+    // Doc: https://www.npmjs.com/package/@nuxtjs/vuetify
+    '@nuxtjs/vuetify',
+  ],
+
+  // Modules: https://go.nuxtjs.dev/config-modules
+  modules: [
+    // https://go.nuxtjs.dev/axios
+    '@nuxtjs/axios',
+  ],
+
+  // Axios module configuration: https://go.nuxtjs.dev/config-axios
+  axios: {
+    // 環境変数API_URLが優先される
+    // baseURL: '/'
+  },
+  // 追加
+  vuetify: {
+    theme: {
+      themes: {
+        light: {
+          primary: '4080BE',
+          info: '4FC1E9',
+          success: '44D69E',
+          warning: 'FEB65E',
+          error: 'FB8678',
+          background: 'f6f6f4',
+        },
+      },
+    },
+  },
+  // Build Configuration: https://go.nuxtjs.dev/config-build
+  build: {},
+}
+```
+
+- `front/pages/index.vue`を編集<br>
+
+```vue:index.vue
+<template>
+  <v-container fluid>
+    <v-card flat tile color="transparent">
+      <v-card-title>
+        Usersテーブルの取得
+      </v-card-title>
+      <v-card-text>
+        <v-simple-table dense>
+          <template v-if="users.length" v-slot:default>
+            <thead>
+              <tr>
+                <th v-for="(key, i) in userKeys" :key="`key-${i}`">
+                  {{ key }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(user, i) in users" :key="`user-${i}`">
+                <td>{{ user.id }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ dateFormat(user.created_at) }}</td>
+              </tr>
+            </tbody>
+          </template>
+          <template v-else>
+            ユーザーが存在しません
+          </template>
+        </v-simple-table>
+      </v-card-text>
+      <v-card-title>
+        Vuetifyの導入（オリジナルカラーの確認）
+      </v-card-title>
+      <v-card-text>
+        <v-btn
+          v-for="(color, i) in colors"
+          :key="`color-${i}`"
+          :color="color"
+          class="mr-2"
+        >
+          {{ color }}
+        </v-btn>
+      </v-card-text>
+    </v-card>
+  </v-container>
+</template>
+
+<script>
+export default {
+  async asyncData({ $axios }) {
+    let users = []
+    await $axios.$get('/api/v1/users').then((res) => (users = res))
+    const userKeys = Object.keys(users[0] || {}) // 追加
+    return { users, userKeys }
+  },
+  // data () 追加
+  data() {
+    return {
+      colors: ['primary', 'info', 'success', 'warning', 'error', 'background'],
+    }
+  },
+  computed: {
+    dateFormat() {
+      return (date) => {
+        const dateTimeFormat = new Intl.DateTimeFormat('ja', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })
+        return dateTimeFormat.format(new Date(date))
+      }
+    },
+  },
+}
+</script>
+```
