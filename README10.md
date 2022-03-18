@@ -385,3 +385,337 @@ export default {
 }
 </script>
 ```
+
+## 47 Vuetify にカスタム CSS を追加する
+
+### Vuetify のブレイクポイント
+
+| CSS クラス | ブレイクポイント  |
+| :--------: | :---------------: |
+|     xs     |    600px 未満     |
+|     sm     |  600〜960px 未満  |
+|     md     | 960〜1264px 未満  |
+|     lg     | 1264〜1904px 未満 |
+|     xl     |    1904px 以上    |
+
+### 完成イメージ
+
+Vuetify カスタム CSS の検証<br>
+
+ipad (768px) と mobile (426px) で表示・非表示<br>
+
+`ipad以上で隠す`<br>
+`mobile未満で隠す`<br>
+
+### ハンズオン
+
+- `$ root $ mkdir front/assets/sass && touch $_/{variables.scss,main.scss}`を実行<br>
+
+* `front/nuxt.config.js`を編集<br>
+
+```js:nuxt.config.js
+export default {
+  // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
+  ssr: false,
+
+  // Global page headers: https://go.nuxtjs.dev/config-head
+  head: {
+    title: 'app',
+    htmlAttrs: {
+      lang: 'en',
+    },
+    meta: [
+      { charset: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { hid: 'description', name: 'description', content: '' },
+      { name: 'format-detection', content: 'telephone=no' },
+    ],
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  },
+
+  // Global CSS: https://go.nuxtjs.dev/config-css
+  css: [],
+
+  // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
+  plugins: ['plugins/axios'],
+
+  // Auto import components: https://go.nuxtjs.dev/config-components
+  components: true,
+
+  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
+  buildModules: [
+    // https://go.nuxtjs.dev/eslint
+    '@nuxtjs/eslint-module',
+    // Doc: https://www.npmjs.com/package/@nuxtjs/vuetify
+    '@nuxtjs/vuetify',
+  ],
+
+  // Modules: https://go.nuxtjs.dev/config-modules
+  modules: [
+    // https://go.nuxtjs.dev/axios
+    '@nuxtjs/axios',
+  ],
+
+  // Axios module configuration: https://go.nuxtjs.dev/config-axios
+  axios: {
+    // 環境変数API_URLが優先される
+    // baseURL: '/'
+  },
+  vuetify: {
+    // 追加
+    // カスタムCSSファイルパス
+    customVariables: ['~/assets/sass/valiables.scss'],
+    // カスタムCSSを有効にするフラグ
+    // Doc: https://vuetifyjs.com/en/features/sass-variables/#nuxt-install
+    treeShake: true,
+    theme: {
+      themes: {
+        light: {
+          primary: '4080BE',
+          info: '4FC1E9',
+          success: '44D69E',
+          warning: 'FEB65E',
+          error: 'FB8678',
+          background: 'f6f6f4',
+        },
+      },
+    },
+  },
+  // Build Configuration: https://go.nuxtjs.dev/config-build
+  build: {},
+}
+```
+
+https://vuetifyjs.com/en/features/sass-variables/#example-variable-file <br>
+
+- `front/assets/sass/valiables.scss`を編集<br>
+
+```scss:valiables.scss
+// custom変数 => https://vuetifyjs.com/en/customization/sass-variables/#sass-variables
+// Lightテーマをカスタマイズする変数
+$material-light: (
+  'background': #f6f6f4,
+);
+
+// 独自のブレイクポイントを追加する変数
+$grid-breakpoints: (
+  'ipad': 768px,
+  'mobile': 426px,
+);
+
+// 独自のブレイクポイントで表示・非表示を切り替えるCSSクラスの追加
+$display-breakpoints: (
+  // 768px未満
+    'ipad-and-down': 'only screen and (max-width: #{map-get($grid-breakpoints, '
+    ipad ') - 1})',
+  // 768px以上
+    'ipad-and-up': 'only screen and (min-width: #{map-get($grid-breakpoints, ' ipad
+    ')})',
+  'mobile-and-down': 'only screen and (max-width: #{map-get($grid-breakpoints, '
+    mobile ') - 1})',
+  'mobile-and-up': 'only screen and (min-width: #{map-get($grid-breakpoints, '
+    mobile ')})'
+);
+```
+
+- `front/pages/index.vue`を編集<br>
+
+```vue:index.vue
+<template>
+  <v-container fluid>
+    <v-card flat tile color="transparent">
+      <v-card-title>
+        Usersテーブルの取得
+      </v-card-title>
+      <v-card-text>
+        <v-simple-table dense>
+          <template v-if="users.length" #default>
+            <thead>
+              <tr>
+                <th v-for="(key, i) in userKeys" :key="`key-${i}`">
+                  {{ key }}
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr v-for="(user, i) in users" :key="`user-${i}`">
+                <td>{{ user.id }}</td>
+                <td>{{ user.name }}</td>
+                <td>{{ user.email }}</td>
+                <td>{{ dateFormat(user.created_at) }}</td>
+              </tr>
+            </tbody>
+          </template>
+          <template v-else>
+            ユーザーが存在しません
+          </template>
+        </v-simple-table>
+      </v-card-text>
+      <v-card-title>
+        Vuetifyの導入（オリジナルカラーの確認）
+      </v-card-title>
+      <!-- 追加 -->
+      <v-card-text>
+        <v-btn
+          v-for="(color, i) in colors"
+          :key="`color-${i}`"
+          :color="color"
+          class="mr-2"
+        >
+          {{ color }}
+        </v-btn>
+      </v-card-text>
+
+      <v-card-title>
+        VuetifyカスタムCSSの検証
+      </v-card-title>
+      <v-card-text>
+        ipad（768px）とmobile（426px）で表示・非表示
+      </v-card-text>
+      <v-card-text>
+        <v-card
+          v-for="(cls, i) in customClass"
+          :key="`cls-${i}`"
+          :color="cls.color"
+          :class="cls.name"
+        >
+          <v-card-text>
+            {{ cls.des }}
+          </v-card-text>
+        </v-card>
+      </v-card-text>
+      <!-- ここまで -->
+    </v-card>
+  </v-container>
+</template>
+
+<script>
+export default {
+  async asyncData({ $axios }) {
+    let users = []
+    await $axios.$get('/api/v1/users').then((res) => (users = res))
+    const userKeys = Object.keys(users[0] || {}) // 追加
+    return { users, userKeys }
+  },
+  // data () 追加
+  data() {
+    return {
+      colors: ['primary', 'info', 'success', 'warning', 'error', 'background'],
+      // 追加
+      customClass: [
+        { name: 'hidden-ipad-and-down', color: 'error', des: 'ipad未満で隠す' },
+        { name: 'hidden-ipad-and-up', color: 'info', des: 'ipad以上で隠す' },
+        {
+          name: 'hidden-mobile-and-down',
+          color: 'success',
+          des: 'mobile未満で隠す',
+        },
+        {
+          name: 'hidden-mobile-and-up',
+          color: 'warning',
+          des: 'mobile以上で隠す',
+        },
+      ],
+      // ここまで
+    }
+  },
+  computed: {
+    dateFormat() {
+      return (date) => {
+        const dateTimeFormat = new Intl.DateTimeFormat('ja', {
+          dateStyle: 'medium',
+          timeStyle: 'short',
+        })
+        return dateTimeFormat.format(new Date(date))
+      }
+    },
+  },
+}
+</script>
+```
+
+- `front/nuxt.config.js`を編集<br>
+
+```js:nuxt.config.js
+export default {
+  // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
+  ssr: false,
+
+  // Global page headers: https://go.nuxtjs.dev/config-head
+  head: {
+    title: 'app',
+    htmlAttrs: {
+      lang: 'en',
+    },
+    meta: [
+      { charset: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { hid: 'description', name: 'description', content: '' },
+      { name: 'format-detection', content: 'telephone=no' },
+    ],
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  },
+
+  // Global CSS: https://go.nuxtjs.dev/config-css
+  // 追加
+  css: ['~/assets/sass/main.scss'],
+
+  // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
+  plugins: ['plugins/axios'],
+
+  // Auto import components: https://go.nuxtjs.dev/config-components
+  components: true,
+
+  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
+  buildModules: [
+    // https://go.nuxtjs.dev/eslint
+    '@nuxtjs/eslint-module',
+    // Doc: https://www.npmjs.com/package/@nuxtjs/vuetify
+    '@nuxtjs/vuetify',
+  ],
+
+  // Modules: https://go.nuxtjs.dev/config-modules
+  modules: [
+    // https://go.nuxtjs.dev/axios
+    '@nuxtjs/axios',
+  ],
+
+  // Axios module configuration: https://go.nuxtjs.dev/config-axios
+  axios: {
+    // 環境変数API_URLが優先される
+    // baseURL: '/'
+  },
+  vuetify: {
+    // カスタムCSSファイルパス
+    customVariables: ['~/assets/sass/valiables.scss'],
+    // カスタムCSSを有効にするフラグ
+    // Doc: https://vuetifyjs.com/en/features/sass-variables/#nuxt-install
+    treeShake: true,
+    theme: {
+      themes: {
+        light: {
+          primary: '4080BE',
+          info: '4FC1E9',
+          success: '44D69E',
+          warning: 'FEB65E',
+          error: 'FB8678',
+          background: 'f6f6f4',
+        },
+      },
+    },
+  },
+  // Build Configuration: https://go.nuxtjs.dev/config-build
+  build: {},
+}
+```
+
+- `front/assets/sass/main.scss`を編集<br>
+
+```scss:main.scss
+// commons
+body {
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+// commons end
+```
