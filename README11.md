@@ -265,3 +265,104 @@ export default {
 }
 </script>
 ```
+
+# セクション 10: ログイン前のレイアウト構築
+
+## 49 Nuxt.js のレイアウト・ページ・コンポーネントの役割を理解する
+
+### 作成するページ
+
+1. ウェルカムページ<br>
+2. 会員登録ページ<br>
+3. ログインページ<br>
+
+### レイアウトからページの呼び出し
+
+```html:default.vue
+<!-- layoutd/default.vue -->
+<template>
+  <v-app>
+    <header />
+    <!-- 共通ヘッダー -->
+    <Nuxt />
+    <!-- ページファイルの呼び出し -->
+    <footer />
+    <!-- 共通フッター -->
+  </v-app>
+</template>
+```
+
+### ページからレイアウトを指定する
+
+```js:index.js
+// JavaScript
+export default {
+  layout() {
+    return 'welcome'
+  }
+
+  // もしくは
+  layout: 'welcome'
+
+  // layoutの指定なし => default.vue
+}
+```
+
+### ページとコンポーネントの違い
+
+<データを非同期で取得する場合><br>
+
+`page`<br>
+
+```js:index.js
+async asyncData ({ $axios }) {
+  let users = []
+  await $axios.$get('/api/v1/users')
+    .then(res => (users = res))
+  return { users }
+}
+```
+
+`layout・component・page`<br>
+
+```js:sample.js
+async fetch () {
+  await this.$axios.$get('/api/v1/users')
+    .then(res => (this.users = res))
+},
+data () {
+  return {
+    users: []
+  }
+}
+```
+
+### コンポーネントファイルの命名規則
+
+DOM テンプレート内に埋め込むコンポーネントファイル、<br>
+components ディレクトリ内で管理する Vue ファイル<br>
+
+|            |   ファイル名   |         DOM テンプレート          |
+| :--------: | :------------: | :-------------------------------: |
+| PascasCase | AppButton.vue  | <app-button><br>or<br><AppButton> |
+| kebab-case | app-button.vue |               同上                |
+
+### 今回のファイル命名ルール
+
+- composnents => PascalCase<br>
+
+* その他 => kebab-case<br>
+
+- DOM テンプレート => <kebab-case> <br>
+
+### まとめ
+
+1. 役割）レイアウト=土台、ページ=URL 表示、コンポーネント=部品<br>
+
+2. 呼び出し）レイアウト => <Nuxt />, ページ => layout ()<br>
+
+3. パス）ページファイルパスが URL になる<br>
+
+4. 違い）ページ => asyncData の使用可, 他 => fetch<br>
+
+5. 規則）コンポーネント名 => PascalCase<br>
