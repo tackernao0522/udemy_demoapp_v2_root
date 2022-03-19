@@ -344,7 +344,7 @@ components ディレクトリ内で管理する Vue ファイル<br>
 
 |            |   ファイル名   |         DOM テンプレート          |
 | :--------: | :------------: | :-------------------------------: |
-| PascasCase | AppButton.vue  | `<app-button>`<br>or<br>`<AppButton>` |
+| PascasCase | AppButton.vue  | <app-button><br>or<br><AppButton> |
 | kebab-case | app-button.vue |               同上                |
 
 ### 今回のファイル命名ルール
