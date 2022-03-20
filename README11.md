@@ -342,10 +342,10 @@ data () {
 DOM テンプレート内に埋め込むコンポーネントファイル、<br>
 components ディレクトリ内で管理する Vue ファイル<br>
 
-|            |   ファイル名   |         DOM テンプレート          |
-| :--------: | :------------: | :-------------------------------: |
+|            |   ファイル名   |           DOM テンプレート            |
+| :--------: | :------------: | :-----------------------------------: |
 | PascasCase | AppButton.vue  | `<app-button>`<br>or<br>`<AppButton>` |
-| kebab-case | app-button.vue |               同上                |
+| kebab-case | app-button.vue |                 同上                  |
 
 ### 今回のファイル命名ルール
 
@@ -366,3 +366,222 @@ components ディレクトリ内で管理する Vue ファイル<br>
 4. 違い）ページ => asyncData の使用可, 他 => fetch<br>
 
 5. 規則）コンポーネント名 => PascalCase<br>
+
+## 49 [ウェルカムページ 1/4] コンポーネントファイル群を作成
+
+- `root $ mkdir front/components && mkdir $_/Home && touch $_/{HomeAppBar.vue,HomeAbout.vue,HomeProducts.vue,HomePrice.vue,HomeConatact.vue,HomeCompany.vue}`を実行<br>
+
+* `front/components/Home/HomeAbout.vue`を編集<br>
+
+```vue:HomeAbout.vue
+<template>
+  <div>
+    HomeAbout.vue
+  </div>
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/components/Home/HomeAppBar.vue`を編集<br>
+
+```vue:HomeAppBar.vue
+<template>
+  <div>
+    HomeAppBar.vue
+  </div>
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/components/Home/HomeCompany.vue`を編集<br>
+
+```vue:HomeCompany.vue
+<template>
+  <div>
+    HomeCompany.vue
+  </div>
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/components/Home/HomeContact.vue`を編集<br>
+
+```vue:HomeContact.vue
+<template>
+  <div>
+    HomeContact.vue
+  </div>
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/components/Home/HomePrice.vue`を編集<br>
+
+```vue:HomePrice.vue
+<template>
+  <div>
+    HomePrice.vue
+  </div>
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/components/Home/HomeProducts.vue`を編集<br>
+
+```vue:HomeProducts.vue
+<template>
+  <div>
+    HomeProducts.vue
+  </div>
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/pages/index.vue`を編集<br>
+
+```vue:index.vue
+<template>
+  <v-app>
+    <home-app-bar />
+    <v-sheet>
+      <v-container fluid :style="{ maxWidth: '1280px' }">
+        <v-row v-for="(menu, i) in menus" :key="`menu-${i}`">
+          <v-col cols="12">
+            <!-- home-about, home-company ... -->
+            <div :is="`Home-${menu.title}`" />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-sheet>
+  </v-app>
+</template>
+
+<script>
+// isを使ったときはimport文が必要になる
+import HomeAbout from '~/components/Home/HomeAbout'
+import HomeProducts from '~/components/Home/HomeProducts'
+import HomePrice from '~/components/Home/HomePrice'
+import HomeContact from '~/components/Home/HomeContact'
+import HomeCompany from '~/components/Home/HomeCompany'
+
+export default {
+  components: {
+    HomeAbout,
+    HomeProducts,
+    HomePrice,
+    HomeContact,
+    HomeCompany,
+  },
+  data() {
+    return {
+      menus: [
+        {
+          title: 'about',
+          subtitle:
+            'このサイトはブログ"独学プログラマ"で公開されているチュートリアルのデモアプリケーションです',
+        },
+        { title: 'products', subtitle: '他にはない優れた機能の数々' },
+        { title: 'price', subtitle: '会社の成長に合わせた3つのプラン' },
+        { title: 'contact', subtitle: 'お気軽にご連絡を' },
+        { title: 'company', subtitle: '私たちの会社' },
+      ],
+    }
+  },
+}
+</script>
+```
+
+- `root $ mkdir front/components/App && touch $_/AppFooter.vue`を実行<br>
+
+- `front/componsnts/App/AppFooter.vue`を編集<br>
+
+```vue:AppFooter.vue
+<template>
+  <div>
+    <v-footer absolute dark color="black">
+      AppFooter.vue
+    </v-footer>
+  </div>
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/pages/index.vue`を編集<br>
+
+```vue:index.vue
+<template>
+  <v-app>
+    <home-app-bar />
+    <v-sheet>
+      <v-container fluid :style="{ maxWidth: '1280px' }">
+        <v-row v-for="(menu, i) in menus" :key="`menu-${i}`">
+          <v-col cols="12">
+            <!-- home-about, home-company ... -->
+            <div :is="`Home-${menu.title}`" />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-sheet>
+    <app-footer />
+  </v-app>
+</template>
+
+<script>
+// isを使ったときはimport文が必要になる
+import AppFooter from '../components/App/AppFooter.vue'
+import HomeAbout from '~/components/Home/HomeAbout'
+import HomeProducts from '~/components/Home/HomeProducts'
+import HomePrice from '~/components/Home/HomePrice'
+import HomeContact from '~/components/Home/HomeContact'
+import HomeCompany from '~/components/Home/HomeCompany'
+
+export default {
+  components: {
+    HomeAbout,
+    HomeProducts,
+    HomePrice,
+    HomeContact,
+    HomeCompany,
+    AppFooter,
+  },
+  data() {
+    return {
+      menus: [
+        {
+          title: 'about',
+          subtitle:
+            'このサイトはブログ"独学プログラマ"で公開されているチュートリアルのデモアプリケーションです',
+        },
+        { title: 'products', subtitle: '他にはない優れた機能の数々' },
+        { title: 'price', subtitle: '会社の成長に合わせた3つのプラン' },
+        { title: 'contact', subtitle: 'お気軽にご連絡を' },
+        { title: 'company', subtitle: '私たちの会社' },
+      ],
+    }
+  },
+}
+</script>
+```
+
+- 反映されない場合は `root $ docker compose restart front`を実行してみる<br>
