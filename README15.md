@@ -211,3 +211,259 @@ export default {
 }
 </script>
 ```
+
+## 55 会員登録フォームを作成する
+
+- `root $ mkdir front/components/User && touch $_/{UserFormCard.vue,UserFormName.vue,UserFormEmail.vue,UserFormPassword.vue}`を実行<br>
+
+* `front/components/User/UserFormCard.vue`を編集<br>
+
+```vue:UserFormCard.vue
+<template>
+  <v-container fluid>
+    <v-row align="center" justify="center">
+      <v-col cols="12" class="my-8 text-center">
+        <h1 class="text-h5 font-weight-bold">{{ appName }}に{{ pageTitle }}</h1>
+      </v-col>
+
+      <v-card flat width="80%" max-width="320" color="transparent">
+        <!-- コンテンツを差し込むスロット -->
+        <slot name="user-form-card-content" />
+      </v-card>
+    </v-row>
+  </v-container>
+</template>
+
+<script>
+export default {
+  data({ $route, $config: { appName } }) {
+    return {
+      appName,
+      // $route.name => /signup = name: signup
+      // $route.name => /account/settings = name: account-settings
+      // `pages.${$route.name}` => pages.signup
+      pageTitle: this.$t(`pages.${$route.name}`),
+    }
+  },
+}
+</script>
+```
+
+- `front components/User/UserFormName.vue`を編集<br>
+
+```vue:UserFormName.vue
+<template>
+  <v-text-field
+    label="ユーザー名を入力"
+    placeholder="あなたの表示名"
+    outlined
+  />
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/components/User/UserFormEmail.vue`を編集<br>
+
+```vue:UserFormEmail.vue
+<template>
+  <v-text-field
+    label="メールアドレスを入力"
+    placeholder="your@email.com"
+    outlined
+  />
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/components/User/UserFormPassword.vue`を編集<br>
+
+```vue:UserFormPassword.vue
+<template>
+  <v-text-field label="パスワードを入力" placeholder="8文字以上" outlined />
+</template>
+
+<script>
+export default {}
+</script>
+```
+
+- `front/pages/signup.vue`を編集<br>
+
+```vue:signup.vue
+<template>
+  <user-form-card>
+    <template #user-form-card-content>
+      <user-form-name />
+      <user-form-email />
+      <user-form-password />
+    </template>
+  </user-form-card>
+</template>
+
+<script>
+import UserFormCard from '../components/User/UserFormCard.vue'
+import UserFormEmail from '../components/User/UserFormEmail.vue'
+import UserFormName from '../components/User/UserFormName.vue'
+import UserFormPassword from '../components/User/UserFormPassword.vue'
+
+export default {
+  components: { UserFormCard, UserFormName, UserFormEmail, UserFormPassword },
+  layout: 'before-login',
+}
+</script>
+```
+
+- `front/nuxt.config.js`を編集<br>
+
+```js:nuxt.config.js
+export default {
+  // Disable server-side rendering: https://go.nuxtjs.dev/ssr-mode
+  ssr: false,
+
+  // Global page headers: https://go.nuxtjs.dev/config-head
+  head: {
+    title: 'app',
+    htmlAttrs: {
+      lang: 'en',
+    },
+    meta: [
+      { charset: 'utf-8' },
+      { name: 'viewport', content: 'width=device-width, initial-scale=1' },
+      { hid: 'description', name: 'description', content: '' },
+      { name: 'format-detection', content: 'telephone=no' },
+    ],
+    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+  },
+
+  // Global CSS: https://go.nuxtjs.dev/config-css
+  css: ['~/assets/sass/main.scss'],
+
+  // Plugins to run before rendering page: https://go.nuxtjs.dev/config-plugins
+  plugins: ['plugins/axios'],
+
+  // Auto import components: https://go.nuxtjs.dev/config-components
+  components: true,
+
+  // Modules for dev and build (recommended): https://go.nuxtjs.dev/config-modules
+  buildModules: [
+    // https://go.nuxtjs.dev/eslint
+    '@nuxtjs/eslint-module',
+    // Doc: https://www.npmjs.com/package/@nuxtjs/vuetify
+    '@nuxtjs/vuetify',
+  ],
+
+  // Modules: https://go.nuxtjs.dev/config-modules
+  modules: [
+    // https://go.nuxtjs.dev/axios
+    '@nuxtjs/axios',
+    // Doc: https://www.npmjs.com/package/@nuxtjs/i18n
+    '@nuxtjs/i18n',
+  ],
+
+  publicRuntimeConfig: {
+    appName: process.env.APP_NAME,
+  },
+
+  // Axios module configuration: https://go.nuxtjs.dev/config-axios
+  axios: {
+    // 環境変数API_URLが優先される
+    // baseURL: '/'
+  },
+  vuetify: {
+    // カスタムCSSファイルパス
+    customVariables: ['~/assets/sass/valiables.scss'],
+    // カスタムCSSを有効にするフラグ
+    // Doc: https://vuetifyjs.com/en/features/sass-variables/#nuxt-install
+    treeShake: true,
+    theme: {
+      themes: {
+        light: {
+          primary: '4080BE',
+          info: '4FC1E9',
+          success: '44D69E',
+          warning: 'FEB65E',
+          error: 'FB8678',
+          background: 'f6f6f4',
+          appblue: '1867C0',
+        },
+      },
+    },
+  },
+  // Doc: https://nuxt-community.github.io/nuxt-i18n/basic-usage.html#nuxt-link
+  i18n: {
+    // 対応言語
+    locales: ['ja', 'en'],
+    // デフォルトで使用する言語を指定
+    defaultLocale: 'ja',
+    // 追加
+    // no_prefix => ルート名に__jaを追加しない
+    strategy: 'no_prefix',
+    // Doc: https://kazupon.github.io/vue-i18n/api/#properties
+    // ここまで
+    vueI18n: {
+      // 翻訳対象のキーがない場合に参照される言語
+      // "login": "ログイン"
+      fallbackLocale: 'ja',
+      // true => i18nの警告を完全に表示しない(default: false)
+      // silentTranslationWarn: true,
+      // フォールバック時に警告を発生させる(default: false)
+      // true => 警告を発生させない(翻訳のキーが存在しない場合のみ警告)
+      silentFallbackWarn: true,
+      // 翻訳データ
+      messages: {
+        ja: require('./locales/ja.json'),
+        en: require('./locales/en.json'),
+      },
+    },
+  },
+  // Build Configuration: https://go.nuxtjs.dev/config-build
+  build: {},
+}
+```
+
+- `front/pages/signup.vue`を編集<br>
+
+```vue:signup.vue
+<template>
+  <user-form-card>
+    <template #user-form-card-content>
+      <!-- 編集 -->
+      <v-form v-model="isValid">
+        <user-form-name />
+        <user-form-email />
+        <user-form-password />
+        <!-- disabled=true => ボタンクリックを無効にする -->
+        <v-btn :disabled="!isValid" block color="appblue" class="white--text">
+          登録する
+        </v-btn>
+      </v-form>
+      <!-- ここまで -->
+    </template>
+  </user-form-card>
+</template>
+
+<script>
+import UserFormCard from '../components/User/UserFormCard.vue'
+import UserFormEmail from '../components/User/UserFormEmail.vue'
+import UserFormName from '../components/User/UserFormName.vue'
+import UserFormPassword from '../components/User/UserFormPassword.vue'
+
+export default {
+  components: { UserFormCard, UserFormName, UserFormEmail, UserFormPassword },
+  layout: 'before-login',
+  <!-- 追加 -->
+  data() {
+    return {
+      isValid: false,
+    }
+  },
+  <!-- ここまで -->
+}
+</script>
+```
