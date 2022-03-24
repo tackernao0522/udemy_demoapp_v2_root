@@ -296,3 +296,117 @@ export default {
 4. 親に sync 修飾子を使えば、データの送受信を一度に行える<br>
 5. 親からの sync 修飾子には、$emit('update:バインドキー', $event)で送信する<br>
 6. 子で v-model を使用するには、computed の get()と set()を使用する<br>
+
+## 57 会員登録フォームの双方向バインディングを実装
+
+- `front/pages/signup.vue`を編集<br>
+
+```vue:signup.vue
+<template>
+  <user-form-card>
+    <template #user-form-card-content>
+      <v-form v-model="isValid">
+        <!-- 編集 -->
+        <user-form-name :name.sync="params.user.name" />
+        <user-form-email :email.sync="params.user.email" />
+        <user-form-password :password.sync="params.user.password" />
+        <!-- ここまで -->
+        <!-- disabled=true => ボタンクリックを無効にする -->
+        <v-btn :disabled="!isValid" block color="appblue" class="white--text">
+          登録する
+        </v-btn>
+      </v-form>
+      <!-- 確認後削除 -->
+      {{ params }}
+    </template>
+  </user-form-card>
+</template>
+
+<script>
+import UserFormCard from '../components/User/UserFormCard.vue'
+import UserFormEmail from '../components/User/UserFormEmail.vue'
+import UserFormName from '../components/User/UserFormName.vue'
+import UserFormPassword from '../components/User/UserFormPassword.vue'
+
+export default {
+  components: { UserFormCard, UserFormName, UserFormEmail, UserFormPassword },
+  layout: 'before-login',
+  data() {
+    return {
+      name: '',
+      isValid: false,
+      <!-- 追加 -->
+      params: { user: { name: '', email: '', password: '' } },
+    }
+  },
+}
+</script>
+```
+
+- `front/components/User/UserFormEmail.vue`を編集<br>
+
+```vue:UserFormEmail.vue
+<template>
+  <v-text-field
+    v-model="setEmail"
+    label="メールアドレスを入力"
+    placeholder="your@email.com"
+    outlined
+  />
+</template>
+
+<script>
+export default {
+  props: {
+    email: {
+      type: String,
+      default: '',
+    },
+  },
+  computed: {
+    setEmail: {
+      get() {
+        return this.email
+      },
+      set(newValue) {
+        return this.$emit('update:email', newValue)
+      },
+    },
+  },
+}
+</script>
+```
+
+- `front/components/User/UserFormPassword.vue`を編集<br>
+
+```vue:UserFormPassword.vue
+<template>
+  <v-text-field
+    v-model="setPassword"
+    label="パスワードを入力"
+    placeholder="8文字以上"
+    outlined
+  />
+</template>
+
+<script>
+export default {
+  props: {
+    password: {
+      type: String,
+      default: '',
+    },
+  },
+  computed: {
+    setPassword: {
+      get() {
+        return this.password
+      },
+      set(newValue) {
+        return this.$emit('update:password', newValue)
+      },
+    },
+  },
+}
+</script>
+```
