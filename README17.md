@@ -393,3 +393,5 @@ export default {
 }
 </script>
 ```
+
+- `front $ git push heroku && heroku open`を実行<br>
