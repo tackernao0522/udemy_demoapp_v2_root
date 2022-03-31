@@ -52,6 +52,6 @@ eyJhbDcioiJIUzUlNilsxxxxxxx. => 署名.<br>
 
   <署名アルゴリズムが HS256 だった場合の署名作成方法><br>
 
-HMACSHA256( base64UrlEncode(header) + "." + base64UrlEncode(payload), your-256-bit-secret )
-↓
+HMACSHA256( base64UrlEncode(header) + "." + base64UrlEncode(payload), your-256-bit-secret )<br>
+↓<br>
 エンコードされたヘッダ + "." + エンコードされたペイロード, シークレットキー<br>
