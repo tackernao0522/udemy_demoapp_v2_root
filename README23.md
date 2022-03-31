@@ -280,3 +280,133 @@ RS256<br>
 ### まとめ
 
 誰でも観れるけど、改ざんできないし、発行者しかデコードできないトークン<br>
+
+## 74 JWT を使ったログイン認証の流れを理解する
+
+参考: https://www.youtube.com/watch?v=4JREwhSC2dQ <br>
+
+### 認証に使用する 2 つの JWT
+
+`refresh_token` `access_token`<br>
+
+### refresh_token の役割
+
+|          |                                       |                    意図                     |
+| :------: | :-----------------------------------: | :-----------------------------------------: |
+|   目的   | access_token を<br>発行するための JWT | 不正なリクエストから<br>ユーザー情報を守る  |
+|  保管先  |           Cookie(HttpOnly)            |     外部 JS を遮断<br>盗聴リスクを軽滅      |
+| 有効期限 |                24 時間                | 業務用アプリを前提<br>1 日 1 回の訪問を想定 |
+
+### access_token の役割
+
+|          |                                          |                     意図                     |
+| :------: | :--------------------------------------: | :------------------------------------------: |
+|   目的   | 保護リソースに<br>アクセスするための JWT |  不正なリクエストから<br>ユーザー情報を守る  |
+|  保管先  |                   Vuex                   | 保管されっぱなしを回避し<br>盗聴リスクを軽滅 |
+| 有効期限 |                  30 分                   |   盗聴された場合の被害を<br>最小限に抑える   |
+
+### トークンの役割のまとめ
+
+|          |             refresh_token             |               access_token               |
+| :------: | :-----------------------------------: | :--------------------------------------: |
+|   目的   | access_token を<br>発行するための JWT | 保護リソースに<br>アクセスするための JWT |
+|  保管先  |           Cookie(HttpOnly)            |                   Vuex                   |
+| 有効期限 |                24 時間                |                  30 分                   |
+
+### ログイン認証の流れ
+
+`Nuxt`-(email, passowrd)->`Rails`(テーブルからうユーザーを取得)-`Rails`(ユーザーがいない場合)-(404 Not Found)->`Nuxt`-> `Vuex`に保管<br>
+
+`Nuxt`-(email, passowrd)->`Rails`(テーブルからうユーザーを取得)-`Rails`(refresh, access の発行)(refresh ID を Users テーブルに保存)(refresh を Cookie に保存)-(access, expires, user)->`Nuxt`->`Vuex`に保管<br>
+
+### サイレントリフレッシュの流れ
+
+`Nuxt`(expires の有効期限が切れた)-リクエスト/refresh `Cookie = refresh`->`Rails`(refresh が有効か確認)無効だった場合-401 Unauthorized->`Nuxt`->セッションが切れたという事をユーザーに通知しログインページにリダイレクトする`redirect /login`<br>
+
+`Nuxt`(expires の有効期限が切れた)-リクエスト/refresh `Cookie = refresh`->`Rails`(refresh が有効か確認)有効だった場合(新しい refresh, access を発行)(Cookie 保存, refresh ID 保存)-access, expires, user->`Nuxt`->`Vuex`に保管<br>
+
+### ログインしたままにする実装
+
+`Nuxt`-リクエスト /refresh(Cookie の有無に関わらず)->`Rails(refreshが有効か確認)(無効だった場合、無い場合)`-401 Unauthorized->`Nuxt`(何もしない)<br>
+
+`Nuxt`-リクエスト /refresh(Cookie の有無に関わらず)->`Rails(refreshが有効か確認)(有効だった場合)(新しいrefresh, accessを発行)(Cookie保存, refresh ID保存)`-(access, expires, user)->`Nuxt`->`Vuex`に保管->redirec /project<br>
+
+### 対 CSRF
+
+クロスサイト・リクエストフォージェリ<br>
+
+リクエスト時に Cookie が自動送信される仕組みを悪用した攻撃<br>
+
+`ログイン済みユーザ`->`罠サイト(CSRF攻撃)(別オリジンからの攻撃となる)`-不正な api リクエスト(今回は Cookie = refresh のみ)->`Rails`(ユーザー DB の書き換えがされてしまう)<br>
+
+refresh => access を発行することしかできない<br>
+よってユーザー DB が書き換えられることはない<br>
+
+access を受け取ったらヤバいのでは？<br>
+下記のように CORS を正しく設定することで、リクエストできない。よってレスポンスも受け取れない。<br>
+
+### CORS とは
+
+クロスオリジン・リソース・シェアリング<br>
+別オリジン間で通信を行う際の HTTP 通信ルール<br>
+
+`Nuxt(http://loccalhost:3000)` <-同一オリジン間の通信しか許容しないよ！-> `Rails(http://localhost:3000)`<br>
+
+`Nuxt(http://localhost:8080)` <-CORS 設定-> `Rails(http://localhost:3000)`<br>
+ルールの中であれば、別オリジンの通信も許容するよ<br>
+
+注意<br>
+
+### CSRF 対策 == CORS 設定ではない
+
+CORS = ルールであって、セキュリティではない<br>
+
+- ブラウザの互換性による<br>
+
+* シンプルなリクエストにはルール適用外 (<img src="">)<br>
+
+今回のアプリの場合は<br>
+カスタムヘッダを使用<br>
+
+`Nuxt`<--X-Requested-With: XMLHttpRequest(対 CSRF)-->(request.xhr?) CORS しかアクセス不可`Rails`<br>
+
+### 対 XSS
+
+クロスサイト・スクリプティング<br>
+外部パラメータに応じて表示を変化させる場所への脆弱性をついた攻撃<br>
+
+http://example.com?q=<script>alert(document.cookie)</script> <br>
+Cookie、 Web ストレージ、変数値の盗み出し<br>
+
+Cookie(HttpOnly) => JS のアクセスを遮断<br>
+access を変数に保存 => 保存され歯内の状態を回避<br>
+
+### ただし、完璧ではない
+
+対 XSS => Cookie(HttpOnly)でも盗まれる<br>
+同一オリジン、同一 JS で実行されるため 変数の access も送信される （参照) https://www.youtube.com/watch?v=4JREwhSC2dQ <br>
+
+対 CSRF => CORS 設定が完璧な前提での話<br>
+ここが不完全だとレスポンストークンが受け取れる<br>
+
+脆弱性を一つ一つ潰して、そもそお攻撃させないことが大事<br>
+
+### Web アプリのセキュリティについて
+
+おすすめ書籍<br>
+`体系的に学ぶ 安全なWebアプリケーションの作り方 第2版`<br>
+CSRF CORS XSS ..<br>
+
+### ログイン認証の流れまとめ
+
+- refresh_token => access を発行するため<br>
+
+* access_token => 保護リソースにアクセスする<br>
+
+- access の有効期限が切れた => サイレントリフレッシュ<br>
+
+* ログインしたままの実装 => refresh をサーバで検証<br>
+
+- 対 CSRF => CORS 設定をまず確認<br>
+
+* 対 XSS => 脆弱性を潰す他ない<br>
