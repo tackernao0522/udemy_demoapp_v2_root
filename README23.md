@@ -171,3 +171,112 @@ gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 ```:terminal
 => [{"sub"=>1}, {"alg"=>"HS256"}]
 ```
+
+## 73 JWT の３つのメリットと注意点を理解する
+
+- `root $ docker compose run --rm api rails c`を実行<br>
+
+- `irb(main):002:0> payload = {sub: 1}`を実行<br>
+
+```
+=> {:sub=>1}
+```
+
+- `irb(main):003:0> secret_key = Rails.application.credentials.secret_key_base`を実行<br>
+
+```
+=> "705f6bc32e0db87bbff3d231b43e6678b3d54e1db609fe4d81bb1e64ae16a41a092da66ca0a57e7eee339d31bdc2f4e900912af00f9e3dcc47501c0709216db6"
+```
+
+- `irb(main):004:0> token = JWT.encode(payload, secret_key)`を実行<br>
+
+```
+=> "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjF9.-4ku4NGdeQSe5iCxLcUrG4jjZTtdjOKyHc7PvmfMu9k"
+```
+
+1. 情報が改ざんできない<br>
+
+- `irb(main):005:0> JWT.decode(token, secret_key)`を実行<br>
+
+```
+=> [{"sub"=>1}, {"alg"=>"HS256"}]
+```
+
+- https://jwt.io/ の Encoded の枠に`eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjF9.-4ku4NGdeQSe5iCxLcUrG4jjZTtdjOKyHc7PvmfMu9k`を貼り付けると Decode された状態が右枠に確認できる<br>
+
+* Decode の sub を 2 に変えると Encoded の文字列が変わっているのがわかる(改ざんされた状態)<br>
+
+```
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjJ9.JM1y2F5gk72w5e7Djb3apcUqgJrmT8yR5eXirQjvXiQ
+```
+
+- `irb(main):006:0> token2 = "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjJ9.JM1y2F5gk72w5e7Djb3apcUqgJrmT8yR5eXirQjvXiQ" 改ざんされた token を入れて実行<br>
+
+```
+=> "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjJ9.JM1y2F5gk72w5e7Djb3apcUqgJrmT8yR5eXirQjvXiQ"
+```
+
+- `irb(main):007:0> JWT.decode(token2, secret_key)`を実行(通らないエラーになる)<br>
+
+```
+Traceback (most recent call last):
+        1: from (irb):7
+JWT::VerificationError (Signature verification raised)
+```
+
+2. ユーザーテーブルが簡潔になる<br>
+
+参考: https://railstutorial.jp/chapters/account_activation_password_reset?version=4.2#cha-account_activation_and_password_reset <br>
+
+3. 発行者が担保される<br>
+
+- `irb(main):008:0> key = "aaaaaaaaa"`を実行<br>
+
+```
+=> "aaaaaaaaa"
+```
+
+- `irb(main):009:0> token = JWT.encode(payload, key)`を実行<br>
+
+```
+=> "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjF9._kSU33Ae3KEXpmcFToecTds0IUGPQWROsj6onLZDhG8"
+```
+
+- `irb(main):010:0> JWT.decode(token, key)`を実行<br>
+
+```
+=> [{"sub"=>1}, {"alg"=>"HS256"}]
+```
+
+- `irb(main):011:0> JWT.decode(token, key+"a")`を実行<br>
+
+```
+Traceback (most recent call last):
+        1: from (irb):11
+JWT::VerificationError (Signature verification raised)
+```
+
+- `irb(main):012:0> JWT.decode(token, nil)`を実行<br>
+
+```
+Traceback (most recent call last):
+        2: from (irb):11
+        1: from (irb):12:in `rescue in irb_binding'
+JWT::DecodeError (No verification key available)
+```
+
+### 署名アルゴリズム
+
+署名時と同じ鍵を使って検証する<br>
+HS256<br>
+
+秘密鍵と公開鍵のペアで検証する<br>
+RS256<br>
+
+### JWT の注意点
+
+1. 誰でもトークンの内容が確認できる<br>
+
+### まとめ
+
+誰でも観れるけど、改ざんできないし、発行者しかデコードできないトークン<br>
