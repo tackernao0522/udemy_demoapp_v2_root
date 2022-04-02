@@ -263,3 +263,120 @@ end
 ```
 => #<UserAuth::AccessToken:0x00007faf4b5fef90 @user_id="x3U85EDaegi/kvVRE1FFK85KlWNmHM4KOhxUAVnXHXfTbICV5GE1hQrcyKczCIfsYyZfRmvqBm0FZTH6l5M1rGePmi5JI6Qhtdw=--65sQKQg34fBOuHXa--DmJwLGYMNopeuo6q9Y7C6Q==", @payload={"exp"=>1648891403, "sub"=>"x3U85EDaegi/kvVRE1FFK85KlWNmHM4KOhxUAVnXHXfTbICV5GE1hQrcyKczCIfsYyZfRmvqBm0FZTH6l5M1rGePmi5JI6Qhtdw=--65sQKQg34fBOuHXa--DmJwLGYMNopeuo6q9Y7C6Q==", "iss"=>"http://localhost:3000", "aud"=>"http://localhost:3000"}, @token="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NDg4OTE0MDMsInN1YiI6IngzVTg1RURhZWdpL2t2VlJFMUZGSzg1S2xXTm1ITTRLT2h4VUFWblhIWGZUYklDVjVHRTFoUXJjeUtjekNJZnNZeVpmUm12cUJtMEZaVEg2bDVNMXJHZVBtaTVKSTZRaHRkdz0tLTY1c1FLUWczNGZCT3VIWGEtLURtSndMR1lNTm9wZXVvNnE5WTdDNlE9PSIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCJ9.7t35r59Jkeja1Hs_aD00cxhy8Y7EvhLnTAj1jA8lPsA", @options={}>
 ```
+
+## 80 アクセストークンから current_user を取得する
+
+- `root $ touch api/app/services/user_authenticate_service.rb`を実行<br>
+
+`api/app/services/user_authenticate_service.rb`を編集<br>
+
+```rb:user_authenticate_service.rb
+module UserAuthenticateService # 認証済みのユーザーが居ればtrue、存在しない場合は401を返す # 認証（トークンの持ち主を判定）
+  def authenticate_user
+    current_user.present? || unauthorized_user
+  end
+
+  # 2021.12.20 追加
+  # 保護リソースには認証・認可を行うこちらのメソッドを使用してください。
+  # 認証 & 認可（トークンの持ち主 && メール認証ユーザーを判定）
+  # 認証済み && メール認証済みのユーザーが居ればtrue、存在しない場合は401を返す
+  def authenticate_active_user
+    (current_user.present? && current_user.activated?) || unauthorized_user
+  end
+
+  private
+
+  # リクエストヘッダートークンを取得する
+  def token_from_request_headers
+    request.headers['Authorization']&.split&.last
+  end
+
+  # access_tokenから有効なユーザーを取得する
+  def fetch_user_from_access_token
+    User.from_access_token(token_from_request_headers)
+  rescue UserAuth.not_found_exception_class, JWT::DecodeError, JWT::EncodeError
+    nil
+  end
+
+  # tokenのユーザーを返す
+  def current_user
+    return nil unless token_from_request_headers
+    @_current_user ||= fetch_user_from_access_token
+  end
+
+  # 認証エラー
+  def unauthorized_user
+    cookies.delete(UserAuth.session_key)
+    head(:unauthorized)
+  end
+end
+```
+
+- `api/app/controllers/application_controller.rb`を編集<br>
+
+```rb:application_controller.rb
+class ApplicationController < ActionController::API
+  include ActionController.Cookies # Cookieを扱う
+  include UserAuthenticateService # 認可を行う
+end
+```
+
+- `api/app/controllers/api/v1/users_controller.rb`を編集<br>
+
+```rb:users_controller.rb
+class Api::V1::UsersController < ApplicationController
+  before_action :authenticate_active_user # 追加
+
+  def index
+    users = User.all # as_json => ハッシュの形でSONデータを返す { "id" => 1, "name" => "test", ... }
+    render json: users.as_json(only: %i[id name email created_at])
+  end
+end
+```
+
+- `root $ docker compose down`を実行<br>
+
+* `root $ docker compose up api`を実行<br>
+
+- `root $ curl http://localhost:3000/api/v1/users`を実行<br>
+
+```
+Completed 401 Unauthorized in 7ms (ActiveRecord: 0.0ms | Allocations: 152) // 401エラーが返される
+```
+
+- `api/app/controllers/api/v1/users_controller.rb`を編集<br>
+
+```rb:users_controller.rb
+class Api::V1::UsersController < ApplicationController # before_action :authenticate_active_user # コメントアウトする 確認後戻す
+  def index
+    users = User.all # as_json => ハッシュの形でSONデータを返す { "id" => 1, "name" => "test", ... }
+    render json: users.as_json(only: %i[id name email created_at])
+  end
+end
+```
+
+- `root $ curl http://localhost:3000/api/v1/users`を実行<br>
+
+```
+[{"id":2,"name":"user1","email":"user1@example.com","created_at":"2022-03-16T11:15:58.486+09:00"},{"id":3,"name":"user2","email":"user2@example.com","created_at":"2022-03-16T11:15:58.860+09:00"},{"id":4,"name":"user3","email":"user3@example.com","created_at":"2022-03-16T11:15:59.199+09:00"},{"id":5,"name":"user4","email":"user4@example.com","created_at":"2022-03-16T11:15:59.541+09:00"},{"id":6,"name":"user5","email":"user5@example.com","created_at":"2022-03-16T11:15:59.880+09:00"},{"id":7,"name":"user6","email":"user6@example.com","created_at":"2022-03-16T11:16:00.219+09:00"},{"id":8,"name":"user7","email":"user7@example.com","created_at":"2022-03-16T11:16:00.554+09:00"},{"id":9,"name":"user8","email":"user8@example.com","created_at":"2022-03-16T11:16:00.898+09:00"},{"id":10,"name":"user9","email":"user9@example.com","created_at":"2022-03-16T11:16:01.241+09:00"},{"id":1,"name":"user0","email":"user0@example.com","created_at":"2022-03-16T11:15:58.112+09:00"}]%
+```
+
+- `api/app/controllers/api/v1/users_controller.rb`を編集<br>
+
+```rb:users_controller.rb
+class Api::V1::UsersController < ApplicationController
+  before_action :authenticate_active_user
+
+  def index
+    render json: current_user.as_json(only: %i[id name email created_at]) # 編集
+  end # as_json => ハッシュの形でSONデータを返す { "id" => 1, "name" => "test", ... }
+end
+```
+
+- `root $ docker compose run --rm api rails r 'puts User.last.to_access_token' | pbcopy`を実行<br>
+
+- `root $ curl http://localhost:3000/api/v1/users \ -H "Authorization: Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE2NDg4OTU2MTQsInN1YiI6IktOZG5FQTVQYy9INEdwZU9ObkNlc0diaitKRVB3RDRVaFRxaVlEMDhqbThiSE9xOUx1SFNlcC85ZURod255TGlBVkc5SExIQlRuU1ptYXdGaUd0YStoZlcwdmdDWjMwOE42az0tLUU3YytVeTNtWUpWaVpVTnEtLURzNTIyUXlydDRGTEFDd3c1K09FK1E9PSIsImlzcyI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCIsImF1ZCI6Imh0dHA6Ly9sb2NhbGhvc3Q6MzAwMCJ9.5qCfm2e0QNPfCh_z4gcADhTueFfGXjzirrNUwY3M2M0"`を実行<br>
+
+```
+{"id":10,"name":"user9","email":"user9@example.com","created_at":"2022-03-16T11:16:01.241+09:00"}%
+```
