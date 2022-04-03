@@ -206,7 +206,7 @@ module App
     # 追加
     # Cookietのsamesite属性を変更する(Rails v6.1〜, :strict, :lax, :none)
     if Rails.env.production?
-      config.action_despatch.cookies_same_site_protection =
+      config.action_dispatch.cookies_same_site_protection =
         ENV['COOKIES_SAME_SITE'].to_sym
     end
 
@@ -225,3 +225,5 @@ none が表示されればOK
 ```
 
 - コミットして heroku にデプロイする<br>
+
++ `api $ heroku run rails db:migrate`を実行<br>
