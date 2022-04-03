@@ -357,3 +357,12 @@ updated_at
 - `api $ curl -X POST https://tk-railsnuxtv1-api.herokuapp.com/api/v1/auth_token \ -H "X-Requested-With: XMLHttpRequest" \ -H "Content-Type: application/json" \ -d '{"auth": {"email": "user0@example.com", "password": "passwor"}}'`を実行(password を変えてみる)<br>
 
 * heroku の log には`service=335ms status=404 bytes=429 protocol=https`が返ってきている<br>
+
+### このチャプターのまとめ
+
+リフレッシュとアクセスを使った Rails のログイン機能の構築<br>
+
+|         種類         |                     役割                     |       保存先・取得先       | 有効期限 |       トークンの無効化        |
+| :------------------: | :------------------------------------------: | :------------------------: | :------: | :---------------------------: |
+| リフレッシュトークン |      セッション管理<br>(アクセスと発行)      |           Cookie           | 24 時間  | ユーザーテーブルの jti を削除 |
+|   アクセストークン   | リソースの保護<br>(本人認証とコンテンツ保護) | メモリ・リクエストヘッダー |  30 分   |               -               |
