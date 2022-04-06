@@ -365,3 +365,283 @@ set updatedAt: ƒ reactiveSetter(newVal)
 6: {__ob__: Observer}
 7: {__ob__: Observer}
 ```
+
+## 89 ログアウト機能を実装する
+
+### ログアウト業務の整理
+
+#### 1. Vuex に保存した値の削除
+
+1. 認証情報<br>
+2. ユーザーオブジェクト<br>
+3. プロジェクト一覧<br>
+4. 選択中のプロジェクト<br>
+   |<br>
+   これらのものを全て
+   ↓<br>
+   \$auth.logout()<br>
+
+### 2. リフレッシュトークンの削除
+
+- `front/plugins/auth.js`を編集<br>
+
+```js:auth.js
+import jwtDecode from 'jwt-decode'
+
+class Authentication {
+  constructor(ctx) {
+    this.store = ctx.store
+    this.$axios = ctx.$axios
+  }
+
+  get token() {
+    return this.store.state.auth.token
+  }
+
+  get expires() {
+    return this.store.state.auth.expires
+  }
+
+  get payload() {
+    return this.store.state.auth.payload
+  }
+
+  get user() {
+    return this.store.state.user.current || {}
+  }
+
+  // 認証情報をVuexに保存する
+  setAuth({ token, expires, user }) {
+    const exp = expires * 1000
+    const jwtPayload = token ? jwtDecode(token) : {}
+
+    this.store.dispatch('getAuthToken', token)
+    this.store.dispatch('getAuthExpires', exp)
+    this.store.dispatch('getCurrentUser', user)
+    this.store.dispatch('getAuthPayload', jwtPayload)
+  }
+
+  // ログイン業務
+  login(response) {
+    this.setAuth(response)
+  }
+
+  // 追加
+  // Vuexの値を初期値に戻す
+  resetVuex() {
+    this.setAuth({ token: null, expires: 0, user: null })
+    this.store.dispatch('getCurrentProject', null)
+    this.store.dispatch('getProjectList', [])
+  }
+
+  // ログアウト業務
+  async logout() {
+    await this.$axios.$delete('/api/v1/auth_token')
+    this.resetVuex()
+  }
+  // ここまで
+}
+
+export default ({ store, $axios }, inject) => {
+  inject('auth', new Authentication({ store, $axios }))
+}
+```
+
+- `front/pages/logout.vue`を編集<br>
+
+```vue:logout.vue
+<script>
+export default {
+  // ページをレンダリングする前に実行される
+  // nuxtServerInitの後
+  <!-- 編集 -->
+  async middleware({ $auth, redirect }) {
+    <!-- 編集 -->
+    await $auth.logout()
+    return redirect('/')
+  },
+  // asyncData () の前
+}
+</script>
+```
+
+- `font/store/index.js`を編集<br>
+
+```js:index.js
+const homePath = 'projects'
+
+// 変数
+export const state = () => ({
+  styles: {
+    homeAppBarHeight: 56,
+  },
+  loggedIn: {
+    homePath: {
+      name: homePath,
+    },
+  },
+  project: {
+    current: null,
+    list: [],
+  },
+  user: {
+    current: null,
+  },
+  auth: {
+    token: null,
+    expires: 0,
+    payload: {},
+  },
+})
+
+// 算出プロパティ
+export const getters = {}
+
+// stateの値を変更する場所
+export const mutations = {
+  setProjectList(state, payload) {
+    state.project.list = payload
+  },
+  setCurrentProject(state, payload) {
+    state.project.current = payload
+  },
+  setCurrentUser(state, payload) {
+    state.user.current = payload
+  },
+  setAuthToken(state, payload) {
+    state.auth.token = payload
+  },
+  setAuthExpires(state, payload) {
+    state.auth.expires = payload
+  },
+  setAuthPayload(state, payload) {
+    state.auth.payload = payload
+  },
+}
+
+// メソッド
+export const actions = {
+  getProjectList({ commit }, projects) {
+    projects = projects || []
+    commit('setProjectList', projects)
+  },
+  // { state, getters, commit, dispatch, rootState, rootGetters } この6つの値が取得できる
+  // rootState => ルート(store/index.js)のstateを取得(rootState = state)
+  getCurrentProject({ state, commit }, params) {
+    // 編集
+    let currentProject = null
+    if (params && params.id) {
+      const id = Number(params.id)
+      currentProject =
+        state.project.list.find((project) => project.id === id) || null
+    }
+    // ここまで
+    commit('setCurrentProject', currentProject)
+  },
+  getCurrentUser({ commit }, user) {
+    commit('setCurrentUser', user)
+  },
+  getAuthToken({ commit }, token) {
+    commit('setAuthToken', token)
+  },
+  getAuthExpires({ commit }, expires) {
+    expires = expires || 0
+    commit('setAuthExpires', expires)
+  },
+  getAuthPayload({ commit }, jwtPayload) {
+    jwtPayload = jwtPayload || {}
+    commit('setAuthPayload', jwtPayload)
+  },
+}
+```
+
+参考: https://github.com/axios/axios#request-config <br>
+
+- `front/plugins/auth.js`を編集<br>
+
+```js:auth.js
+import jwtDecode from 'jwt-decode'
+
+class Authentication {
+  constructor(ctx) {
+    this.store = ctx.store
+    this.$axios = ctx.$axios
+  }
+
+  get token() {
+    return this.store.state.auth.token
+  }
+
+  get expires() {
+    return this.store.state.auth.expires
+  }
+
+  get payload() {
+    return this.store.state.auth.payload
+  }
+
+  get user() {
+    return this.store.state.user.current || {}
+  }
+
+  // 認証情報をVuexに保存する
+  setAuth({ token, expires, user }) {
+    const exp = expires * 1000
+    const jwtPayload = token ? jwtDecode(token) : {}
+
+    this.store.dispatch('getAuthToken', token)
+    this.store.dispatch('getAuthExpires', exp)
+    this.store.dispatch('getCurrentUser', user)
+    this.store.dispatch('getAuthPayload', jwtPayload)
+  }
+
+  // ログイン業務
+  login(response) {
+    this.setAuth(response)
+  }
+
+  // Vuexの値を初期値に戻す
+  resetVuex() {
+    this.setAuth({ token: null, expires: 0, user: null })
+    this.store.dispatch('getCurrentProject', null)
+    this.store.dispatch('getProjectList', [])
+  }
+
+  // 追加
+  // axiosのレスポンス401を許容する
+  // Doc: https://github.com/axios/axios#request-config
+  resolveUnauthorized(status) {
+    return (status >= 200 && status < 300) || status === 401
+  }
+
+  // ログアウト業務
+  async logout() {
+    // 編集
+    await this.$axios.$delete('/api/v1/auth_token', {
+      validateStatus: (status) => this.resolveUnauthorized(status),
+    })
+    this.resetVuex()
+  }
+}
+
+export default ({ store, $axios }, inject) => {
+  inject('auth', new Authentication({ store, $axios }))
+}
+```
+
+- `front/layouts/default.vue`を編集<br>
+
+```vue:default.vue
+<template>
+  <v-app>
+    <Nuxt />
+  </v-app>
+</template>
+
+<script>
+export default {
+  <!-- 追記 -->
+  name: 'LayoutsDefault',
+}
+</script>
+```
