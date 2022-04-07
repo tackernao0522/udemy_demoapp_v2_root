@@ -306,3 +306,148 @@ export default async ({ $auth, $axios, store, route, redirect, isDev }) => {
   }
 }
 ```
+
+## 95 ログイン済みユーザーのリダイレクト処理を行う
+
+### ログイン済みユーザーがアクセスできないルート
+
+1. ホーム / (index.vue)<br>
+
+2. 会員登録ページ /signup (signup.vue)<br>
+
+3. ログインページ /login (login.vue)<br>
+
+### ハンズオン
+
+- `root $ touch front/middleware/logged-in-redirect.js`を実行<br>
+
+* `front/middleware/logged-in-redirect.js`を編集<br>
+
+```js:logged-in-redirect.js
+export default ({ $auth, store, route, redirect }) => {
+  // ログイン済ユーザーをリダイレクトさせる
+  const redirectPaths = store.state.loggedIn.redirectPaths
+  if ($auth.loggedIn() && redirectPaths.includes(route.name)) {
+    return redirect(store.state.loggedIn.homePath)
+  }
+}
+```
+
+- `front/layouts/before-login.vue`を編集<br>
+
+```vue:before-login.vue
+<template>
+  <v-app>
+    <before-login-app-bar />
+    <v-main>
+      <app-toaster />
+      <Nuxt />
+    </v-main>
+    <app-footer />
+  </v-app>
+</template>
+
+<script>
+import AppFooter from '../components/App/AppFooter.vue'
+import AppToaster from '../components/App/AppToaster.vue'
+import BeforeLoginAppBar from '../components/BeforeLogin/BeforeLoginAppBar.vue'
+export default {
+  name: 'LayoutsBeforeLogin',
+  components: { BeforeLoginAppBar, AppFooter, AppToaster },
+  <!-- 追加 -->
+  middleware: ['logged-in-redirect'],
+}
+</script>
+```
+
+- `front/pages/index.vue`を編集<br>
+
+```vue:index.vue
+<template>
+  <v-app>
+    <home-app-bar :menus="menus" :img-height="imgHeight" />
+    <v-img
+      id="scroll-top"
+      dark
+      src="https://picsum.photos/id/20/1920/1080?blur=5"
+      gradient="to top right, rgba(19,84,122,.6), rgba(128,208,199,.9)"
+      :height="imgHeight"
+    >
+      <v-row
+        align="center"
+        justify="center"
+        :style="{ height: `${imgHeight}px` }"
+      >
+        <v-col cols="12" class="text-center">
+          <h1 class="display-1 mb-4">
+            未来を作ろう。ワクワクしよう。
+          </h1>
+          <h4 class="subheading" :style="{ letterSpacing: '5px' }">
+            中小企業に特化した事業計画策定ツール
+          </h4>
+        </v-col>
+      </v-row>
+    </v-img>
+    <v-sheet>
+      <v-container fluid :style="{ maxWidth: '1280px' }">
+        <v-row v-for="(menu, i) in menus" :key="`menu-${i}`">
+          <v-col :id="menu.title" cols="12">
+            <v-card flat>
+              <v-card-title class="justify-center display-1">
+                {{ $t(`menus.${menu.title}`) }}
+              </v-card-title>
+              <v-card-text class="text-center">
+                {{ menu.subtitle }}
+              </v-card-text>
+            </v-card>
+          </v-col>
+          <v-col cols="12">
+            <!-- home-about, home-company ... -->
+            <div :is="`Home-${menu.title}`" />
+          </v-col>
+        </v-row>
+      </v-container>
+    </v-sheet>
+    <app-footer />
+  </v-app>
+</template>
+
+<script>
+// isを使ったときはimport文が必要になる
+import AppFooter from '../components/App/AppFooter.vue'
+import HomeAbout from '~/components/Home/HomeAbout'
+import HomeProducts from '~/components/Home/HomeProducts'
+import HomePrice from '~/components/Home/HomePrice'
+import HomeContact from '~/components/Home/HomeContact'
+import HomeCompany from '~/components/Home/HomeCompany'
+
+export default {
+  components: {
+    HomeAbout,
+    HomeProducts,
+    HomePrice,
+    HomeContact,
+    HomeCompany,
+    AppFooter,
+  },
+  <!-- 追加 -->
+  middleware: ['logged-in-redirect'],
+  data() {
+    return {
+      imgHeight: 500,
+      menus: [
+        {
+          title: 'about',
+          subtitle:
+            'このサイトはブログ"独学プログラマ"で公開されているチュートリアルのデモアプリケーションです',
+        },
+        { title: 'products', subtitle: '他にはない優れた機能の数々' },
+        { title: 'price', subtitle: '会社の成長に合わせた3つのプラン' },
+        { title: 'contact', subtitle: 'お気軽にご連絡を' },
+        { title: 'company', subtitle: '私たちの会社' },
+      ],
+    }
+  },
+}
+</script>
+```
