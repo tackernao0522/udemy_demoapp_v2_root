@@ -25,7 +25,7 @@ https://web.dev/same-site-same-origin/ <br>
 ### このチャプターで達成すること
 
 | Nuxt.js（フロント） | Rails（サーバ） |
-|||
+|---|---|
 | 1 □ Heroku にカスタムドメイン設定 | 6 □ Heroku にカスタムドメイン設定 |
 | 2 □ ドメインの DNS 設定 | 7 □ ドメインの DNS 設定 |
 | 3 □ SSL 化 | 8 □ SSL 化 |
