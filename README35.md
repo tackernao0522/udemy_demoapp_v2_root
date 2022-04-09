@@ -24,12 +24,12 @@ https://web.dev/same-site-same-origin/ <br>
 
 ### このチャプターで達成すること
 
-| Nuxt.js（フロント） | Rails（サーバ） |
-|---|---|
-| 1 □ Heroku にカスタムドメイン設定 | 6 □ Heroku にカスタムドメイン設定 |
-| 2 □ ドメインの DNS 設定 | 7 □ ドメインの DNS 設定 |
-| 3 □ SSL 化 | 8 □ SSL 化 |
-| 4 □ Rails の API_DOMAIN の値の変更 | 9 □ Nuxt.js の API_URL の値を変更 |
+| Nuxt.js（フロント）                 | Rails（サーバ）                      |
+| ----------------------------------- | ------------------------------------ |
+| 1 □ Heroku にカスタムドメイン設定   | 6 □ Heroku にカスタムドメイン設定    |
+| 2 □ ドメインの DNS 設定             | 7 □ ドメインの DNS 設定              |
+| 3 □ SSL 化                          | 8 □ SSL 化                           |
+| 4 □ Rails の API_DOMAIN の値の変更  | 9 □ Nuxt.js の API_URL の値を変更    |
 | 5 □ 常時 SSL 化（リダイレクト処理） | 10 □ 常時 SSL 化（リダイレクト処理） |
 
 ### このチャプターを始める前に
@@ -43,3 +43,26 @@ https://web.dev/same-site-same-origin/ <br>
 https://jp.heroku.com/pricing <br>
 
 (2021 年時点)<br>
+
+### 99 Nuxt.js にカスタムドメインを設定して SSL 化する
+
+- `front $ heroku login`を実行<br>
+
+* `front $ heroku domains:add www.takapro-tech.site`を実行<br>
+
+- `front $ heroku domains`を実行して確認<br>
+
+```
+=== tk-railsnuxtv1-front Heroku Domain
+tk-railsnuxtv1-front.herokuapp.com
+
+=== tk-railsnuxtv1-front Custom Domains
+Domain Name           DNS Record Type DNS Target                                              SNI Endpoint
+www.takapro-tech.site CNAME           fathomless-taiga-o7ceundax1gabha0ex721nu4.herokudns.com pteranodon-17263
+```
+
+taka-project777@taka.com <br>
+
+https://qiita.com/tksh8/items/ab3748bcb01316461abe
+
+https://qiita.com/ozin/items/62bc7ef1dd3c827177fb <br>
