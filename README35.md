@@ -259,3 +259,98 @@ export default {
 - `front $ heroku config:set BASE_URL=https://www.takapro-tech.site`を実行 <br>
 
 * heroku に push する `$ git push heroku`<br>
+
+## 101 Rails にカスタムドメインを設定して SSL 化する<br>
+
+https://devcenter.heroku.com/ja/articles/automated-certificate-management#setup <br>
+
+- `api $ heroku domains:add www.api.takapro-tech.site`を実行<br>
+
+```
+tk-railsnuxtv1-api.herokuapp.com
+
+=== tk-railsnuxtv1-api Custom Domains
+Domain Name               DNS Record Type DNS Target                                           SNI Endpoint
+api.www.takapro-tech.site CNAME           closed-violet-pnm512ykaapch0f89gugoid8.herokudns.com undefined
+groovy@groovy-no-MacBook-Pro api % heroku domains:add www.api.takapro-tech.site
+Configure your app's DNS provider to point to the DNS Target animated-goldenrod-az4sg9vabl8nfnsdzoek8gdo.herokudns.com.
+    For help, see https://devcenter.heroku.com/articles/custom-domains
+
+The domain www.api.takapro-tech.site has been enqueued for addition
+Run heroku domains:wait 'www.api.takapro-tech.site' to wait for completion
+Adding www.api.takapro-tech.site to ⬢ tk-railsnuxtv1-api... done
+```
+
+- `api $ heroku domains`を実行して`target`をコピーしておく<br>
+
+```
+=== tk-railsnuxtv1-api Heroku Domain
+tk-railsnuxtv1-api.herokuapp.com
+
+=== tk-railsnuxtv1-api Custom Domains
+Domain Name               DNS Record Type DNS Target                                                SNI Endpoint
+www.api.takapro-tech.site CNAME           animated-goldenrod-az4sg9vabl8nfnsdzoek8gdo.herokudns.com undefined
+```
+
+- お名前.com の DSN 設定に追加しておく<br>
+
+* `api $ heroku ps:resize web=hobby`を実行<br>
+
+```
+Scaling dynos on ⬢ tk-railsnuxtv1-api... done
+=== Dyno Types
+type  size   qty  cost/mo
+────  ─────  ───  ───────
+web   Hobby  1    7
+=== Dyno Totals
+type   total
+─────  ─────
+Hobby  1
+```
+
+- `api $ heroku ps`を実行<br>
+
+```
+=== web (Hobby): /bin/sh -c bundle\ exec\ puma\ -C\ config/puma.rb (1)
+web.1: up 2022/04/10 12:20:21 +0900 (~ 41s ago)
+```
+
+- `api $ heroku certs:auto`を実行<br>
+
+Status は`Cert issued`になっていれば OK<br>
+
+```
+=== Automatic Certificate Management is enabled on tk-railsnuxtv1-api
+
+Certificate details:
+Common Name(s): www.api.takapro-tech.site
+Domain(s):      7104b1b7-7b4a-4fe9-a55a-15fc0e5870e3
+Expires At:     2022-07-09 02:20 UTC
+Issuer:         /C=US/O=Let's Encrypt/CN=R3
+Starts At:      2022-04-10 02:20 UTC
+Subject:        /CN=www.api.takapro-tech.site
+SSL certificate is verified by a root authority.
+
+Domain                     Status       Last Updated
+─────────────────────────  ───────────  ────────────
+www.api.takapro-tech.site  Cert issued  5 minutes
+```
+
+- `front/heroku.yml`を編集<br>
+
+```yml:heroku.yml
+setup:
+  config:
+    NODE_ENV: production
+build:
+  docker:
+    web: Dockerfile
+  config:
+    WORKDIR: app
+    # 編集
+    API_URL: 'https://www.api.takapro-tech.site'
+run:
+  web: yarn run start
+```
+
+- front を heroku に push しておく(これで safari などでも SSL redeirect する)<br>
