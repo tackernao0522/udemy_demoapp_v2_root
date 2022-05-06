@@ -18,10 +18,12 @@ end
 - `api/config/routes.rb`を編集<br>
 
 ```rb:routes.rb
-class Api::V1::UsersController < ApplicationController
-  def index
-    users = User.all # as_json => ハッシュの形でSONデータを返す { "id" => 1, "name" => "test", ... }
-    render json: users.as_json(only: %i[id name email created_at])
+Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      # api test action
+      resources :users, only:[:index]
+    end
   end
 end
 ```
