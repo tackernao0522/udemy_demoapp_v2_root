@@ -235,6 +235,22 @@ export default {
 
 - `front $ mkdir assets layouts middleware plugins`を実行<br>
 
++ `front $touch layouts/default.vue`を実行<br>
+
++ `front/layouts/default.vue`を編集<br>
+
+```vue:default.vue
+<template>
+  <v-app>
+    <Nuxt />
+  </v-app>
+</template>
+
+<script>
+export default {}
+</script>
+```
+
 * `front/pages/index.vue`を編集<br>
 
 - `yarn cache clean`<br>
