@@ -190,6 +190,48 @@ export default {
 
 - `root $ mkdir front/components/BeforeLogin && touch $_/BeforeLoginAppBar.vue`を実行<br>
 
++ `front components/BeforeLogin/BeforeLoginAppBar.vue`を編集<br>
+
+```vue:BeforeLoginBar.vue
+<template>
+  <v-app-bar
+    app
+    :height="homeAppBarHeight"
+    color="white"
+  >
+    <nuxt-link
+      to="/"
+      class="text-decoration-none"
+    >
+      <app-logo />
+    </nuxt-link>
+
+    <app-title
+      class="hidden-mobile-and-down"
+    />
+
+    <v-spacer />
+
+    <app-signup-button />
+    <app-login-button />
+  </v-app-bar>
+</template>
+
+<script>
+import AppLoginButton from '../App/AppLoginButton.vue'
+import AppLogo from '../App/AppLogo.vue'
+import AppSignupButton from '../App/AppSignupButton.vue'
+export default {
+  components: { AppLogo, AppSignupButton, AppLoginButton },
+  data({ $store }) {
+    return {
+      homeAppBarHeight: $store.state.styles.homeAppBarHeight
+    }
+  }
+}
+</script>
+```
+
 * `front layouts/before-login.vue`を編集<br>
 
 ```vue:before-login.vue
