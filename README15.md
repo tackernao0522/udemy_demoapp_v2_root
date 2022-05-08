@@ -190,9 +190,9 @@ export default {
 
 - `root $ mkdir front/components/BeforeLogin && touch $_/BeforeLoginAppBar.vue`を実行<br>
 
-* `front/components/BeforeLogin/BeforeLoginAppBar.vue`を編集<br>
+* `front layouts/before-login.vue`を編集<br>
 
-```vue:BeforeLoginAppBar.vue
+```vue:before-login.vue
 <template>
   <v-app>
     <before-login-app-bar />
