@@ -316,8 +316,7 @@ docker-compose.yml と同じディレクトリにある `.env`ファイルが自
 
 * `.gitigonore`ファイルを編集<br>
 
-```
-.gitignore
+```:.gitignore
 /.DS_store
 ```
 
