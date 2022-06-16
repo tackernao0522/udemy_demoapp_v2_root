@@ -316,7 +316,7 @@ end
 
 ```rb:application_controller.rb
 class ApplicationController < ActionController::API
-  include ActionController.Cookies # Cookieを扱う
+  include ActionController::Cookies # Cookieを扱う
   include UserAuthenticateService # 認可を行う
 end
 ```
